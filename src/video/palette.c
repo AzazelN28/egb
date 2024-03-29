@@ -1,5 +1,12 @@
 #include "palette.h"
 
+uint8_t palette_current[PALETTE_BYTES];
+
+void palette_start()
+{
+  palette_get_all(palette_current);
+}
+
 /**
  * Obtiene todos los colores de la paleta
  * y las almacena en la memoria apuntada
@@ -8,7 +15,7 @@
 void palette_get_all(uint8_t *pal) {
   outportb(PALETTE_MASK, 0xFF);
   outportb(PALETTE_READ, 0);
-  for (int i = 0; i < 768; ++i) {
+  for (int i = 0; i < PALETTE_BYTES; ++i) {
     pal[i] = inportb(PALETTE_DATA);
   }
 }
@@ -20,7 +27,7 @@ void palette_get_all(uint8_t *pal) {
 void palette_set_all(uint8_t *pal) {
   outportb(PALETTE_MASK, 0xFF);
   outportb(PALETTE_WRITE, 0);
-  for (int i = 0; i < 768; ++i) {
+  for (int i = 0; i < PALETTE_BYTES; ++i) {
     outportb(PALETTE_DATA, pal[i]);
   }
 }

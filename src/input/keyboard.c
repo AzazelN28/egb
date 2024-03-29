@@ -21,7 +21,7 @@ void keyboard_start() {
   _go32_dpmi_get_protected_mode_interrupt_vector(KEYBOARD_INTERRUPT,
                                                  &prev_handler);
 
-  new_handler.pm_offset = (int32_t)keyboard_handler;
+  new_handler.pm_offset = (uint32_t)keyboard_handler;
   new_handler.pm_selector = _go32_my_cs();
 
   _go32_dpmi_chain_protected_mode_interrupt_vector(KEYBOARD_INTERRUPT,

@@ -42,6 +42,7 @@ void video_stop();
 bool video_set(uint32_t mode);
 void video_copy();
 void video_sync();
+void video_update();
 
 void video_clear();
 
@@ -49,8 +50,8 @@ void video_unchained_enable();
 void video_unchained_clear();
 void video_unchained_set_plane_mask(uint8_t plane);
 
-void video_put_pixel(uint32_t x, uint32_t y, uint8_t color);
-void video_put_pixel_safe(uint32_t x, uint32_t y, uint8_t color);
-uint8_t video_get_pixel(uint32_t x, uint32_t y);
-void video_fill_rect(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint8_t color);
-void video_draw_line(uint32_t ax, uint32_t ay, uint32_t bx, uint32_t by, uint8_t color);
+void video_put_pixel(uint16_t x, uint16_t y, uint8_t color);
+void video_put_pixel_safe(uint16_t x, uint16_t y, uint8_t color);
+uint8_t video_get_pixel(uint16_t x, uint16_t y);
+void video_fill_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t color);
+void video_draw_line(uint16_t ax, uint16_t ay, uint16_t bx, uint16_t by, uint8_t color);

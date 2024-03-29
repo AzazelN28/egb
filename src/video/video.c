@@ -39,13 +39,23 @@ void video_stop() {
   video_set_mode(VIDEO_MODE_TEXT);
 }
 
-void inline video_copy() { memcpy(video_ptr, video_buffer, VIDEO_BUFFER_SIZE); }
+void inline video_copy() {
+  memcpy(video_ptr, video_buffer, VIDEO_BUFFER_SIZE);
+}
 
 void inline video_sync() {
   while (inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE)
     ;
   while (!(inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE))
     ;
+}
+
+void inline video_update() {
+  while (inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE)
+    ;
+  while (!(inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE))
+    ;
+  memcpy(video_ptr, video_buffer, VIDEO_BUFFER_SIZE);
 }
 
 void inline video_clear() {
@@ -81,30 +91,30 @@ void video_unchained_set_plane_mask(uint8_t plane)
   outportb(VGA_SC_DATA, 1 << (plane & VGA_PLANE_MASK));
 }
 
-void inline video_put_pixel(uint32_t x, uint32_t y, uint8_t color) {
+void inline video_put_pixel(uint16_t x, uint16_t y, uint8_t color) {
   video_buffer[y * VIDEO_WIDTH + x] = color;
 }
 
-void inline video_put_pixel_safe(uint32_t x, uint32_t y, uint8_t color) {
+void inline video_put_pixel_safe(uint16_t x, uint16_t y, uint8_t color) {
   if (x >= 0 && x < VIDEO_WIDTH && y >= 0 && y < VIDEO_HEIGHT)
     video_put_pixel(x, y, color);
 }
 
-uint8_t inline video_get_pixel(uint32_t x, uint32_t y) {
+uint8_t inline video_get_pixel(uint16_t x, uint16_t y) {
   return video_buffer[y * VIDEO_WIDTH + x];
 }
 
-void inline video_fill_rect(uint32_t x, uint32_t y, uint32_t w, uint32_t h,
+void inline video_fill_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h,
                             uint8_t color) {
-  for (int32_t j = y; j < y + h; j++) {
+  for (uint16_t j = y; j < y + h; j++) {
     uint32_t offset = j * VIDEO_WIDTH;
-    for (int32_t i = x; i < x + w; i++) {
+    for (uint16_t i = x; i < x + w; i++) {
       video_buffer[offset + i] = color;
     }
   }
 }
 
-void inline video_stroke_rect(uint32_t x, uint32_t y, uint32_t w, uint32_t h,
+void inline video_stroke_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h,
                               uint8_t color) {
   for (int32_t i = x; i < x + w; i++) {
     video_put_pixel(i, y, color);
@@ -118,20 +128,20 @@ void inline video_stroke_rect(uint32_t x, uint32_t y, uint32_t w, uint32_t h,
 }
 
 // @see https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-void video_draw_line(uint32_t ax, uint32_t ay, uint32_t bx, uint32_t by, uint8_t color)
+void video_draw_line(uint16_t ax, uint16_t ay, uint16_t bx, uint16_t by, uint8_t color)
 {
-  int32_t dx = abs(ax - bx);
-  int32_t sx = ax < bx ? 1 : -1;
-  int32_t dy = -abs(ay - by);
-  int32_t sy = ay < by ? 1 : -1;
-  int32_t err = dx + dy;
+  uint16_t dx = abs(ax - bx);
+  uint16_t sx = ax < bx ? 1 : -1;
+  uint16_t dy = -abs(ay - by);
+  uint16_t sy = ay < by ? 1 : -1;
+  uint16_t err = dx + dy;
 
   while (true) {
     video_put_pixel(ax, ay, color);
     if (ax == bx && ay == by)
       break;
 
-    int32_t e2 = 2 * err;
+    uint16_t e2 = 2 * err;
     if (e2 >= dy) {
       err += dy;
       ax += sx;

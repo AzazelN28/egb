@@ -23,7 +23,18 @@
 #define TIMER_INTERRUPT 0x08
 #define TIMER_FREQUENCY 0x1234DD / TICS_PER_SEC
 
-extern volatile int32_t tics;
+extern volatile uint32_t timer_tics;
 
 void timer_start();
 void timer_stop();
+
+typedef struct timer_
+{
+  uint32_t start;
+} timer_t;
+
+timer_t* timer_new();
+void timer_reset(timer_t *timer);
+void timer_free(timer_t *timer);
+uint32_t timer_elapsed(timer_t *timer);
+bool timer_timeout(timer_t *timer, uint32_t timeout_tics);

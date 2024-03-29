@@ -4,8 +4,11 @@
 #include "../input/mouse.h"
 #include "../video/palette.h"
 #include "../video/video.h"
+#include "../video/font.h"
+#include "../video/fade.h"
 #include "../sound/speaker.h"
 #include "../sound/sb.h"
+#include "../math/fixed.h"
 #include "./timer.h"
 #include <stdbool.h>
 #include <stdio.h>
