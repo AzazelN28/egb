@@ -37,6 +37,11 @@
 #define VGA_UNDERLINE_LOC 0x14
 #define VGA_MODE_CONTROL 0x17
 
+#define VIDEO_PUT_PIXEL(x,y,c) video_buffer[y * VIDEO_WIDTH + x] = c
+
+extern uint8_t *video_ptr;
+extern uint8_t video_buffer[VIDEO_BUFFER_SIZE];
+
 bool video_start();
 void video_stop();
 bool video_set(uint32_t mode);

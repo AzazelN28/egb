@@ -39,26 +39,22 @@ void video_stop() {
   video_set_mode(VIDEO_MODE_TEXT);
 }
 
-void inline video_copy() {
+void video_copy() {
   memcpy(video_ptr, video_buffer, VIDEO_BUFFER_SIZE);
 }
 
-void inline video_sync() {
-  while (inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE)
-    ;
-  while (!(inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE))
-    ;
+void video_sync() {
+  while (inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE);
+  while (!(inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE));
 }
 
-void inline video_update() {
-  while (inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE)
-    ;
-  while (!(inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE))
-    ;
+void video_update() {
+  while (inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE);
+  while (!(inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE));
   memcpy(video_ptr, video_buffer, VIDEO_BUFFER_SIZE);
 }
 
-void inline video_clear() {
+void video_clear() {
   memset(video_buffer, 0, VIDEO_BUFFER_SIZE);
 }
 
@@ -91,20 +87,20 @@ void video_unchained_set_plane_mask(uint8_t plane)
   outportb(VGA_SC_DATA, 1 << (plane & VGA_PLANE_MASK));
 }
 
-void inline video_put_pixel(uint16_t x, uint16_t y, uint8_t color) {
+void video_put_pixel(uint16_t x, uint16_t y, uint8_t color) {
   video_buffer[y * VIDEO_WIDTH + x] = color;
 }
 
-void inline video_put_pixel_safe(uint16_t x, uint16_t y, uint8_t color) {
+void video_put_pixel_safe(uint16_t x, uint16_t y, uint8_t color) {
   if (x >= 0 && x < VIDEO_WIDTH && y >= 0 && y < VIDEO_HEIGHT)
-    video_put_pixel(x, y, color);
+    VIDEO_PUT_PIXEL(x, y, color);
 }
 
-uint8_t inline video_get_pixel(uint16_t x, uint16_t y) {
+uint8_t video_get_pixel(uint16_t x, uint16_t y) {
   return video_buffer[y * VIDEO_WIDTH + x];
 }
 
-void inline video_fill_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h,
+void video_fill_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h,
                             uint8_t color) {
   for (uint16_t j = y; j < y + h; j++) {
     uint32_t offset = j * VIDEO_WIDTH;
@@ -114,16 +110,16 @@ void inline video_fill_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h,
   }
 }
 
-void inline video_stroke_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h,
+void video_stroke_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h,
                               uint8_t color) {
   for (int32_t i = x; i < x + w; i++) {
-    video_put_pixel(i, y, color);
-    video_put_pixel(i, y + h, color);
+    VIDEO_PUT_PIXEL(i, y, color);
+    VIDEO_PUT_PIXEL(i, y + h, color);
   }
 
   for (int32_t i = y; i < y + h; i++) {
-    video_put_pixel(x, i, color);
-    video_put_pixel(x + w, i, color);
+    VIDEO_PUT_PIXEL(x, i, color);
+    VIDEO_PUT_PIXEL(x + w, i, color);
   }
 }
 
@@ -137,7 +133,7 @@ void video_draw_line(uint16_t ax, uint16_t ay, uint16_t bx, uint16_t by, uint8_t
   uint16_t err = dx + dy;
 
   while (true) {
-    video_put_pixel(ax, ay, color);
+    VIDEO_PUT_PIXEL(ax, ay, color);
     if (ax == bx && ay == by)
       break;
 
