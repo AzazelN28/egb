@@ -1,89 +1,8 @@
 #include "game.h"
 
-#define RAYCASTER_MIN_Y 20
-#define RAYCASTER_MAX_Y 160
-
-#define MAP_WIDTH 24
-#define MAP_HEIGHT 24
-
-uint32_t map[MAP_WIDTH][MAP_HEIGHT] =
-  {
-    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 0, 0, 0, 0, 3, 0, 3, 0, 3, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 2, 2, 0, 2, 2, 0, 1, 0, 0, 3, 0, 3, 0, 3, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 4, 0, 4, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 4, 0, 0, 0, 0, 5, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 4, 0, 4, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 4, 0, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
-  };
-
-typedef struct vec2fix_ {
-  fixed_t x, y;
-} vec2fix_t;
-
-typedef struct vec2int_ {
-  int16_t x, y;
-} vec2int_t;
-
-struct view_ {
-  vec2fix_t position;
-  vec2fix_t direction;
-  vec2fix_t plane;
-} view;
-
-struct column_
-{
-  fixed_t z;
-  int16_t height;
-  int16_t draw_start;
-  int16_t draw_end;
-} columns[VIDEO_WIDTH];
-
-struct ray_
-{
-  bool hit;
-  int16_t iterations;
-  uint8_t side;
-  fixed_t x;
-  fixed_t perp_wall_dist;
-  vec2fix_t tile;
-  vec2int_t tilei;
-  vec2fix_t step;
-  vec2fix_t side_dist;
-  vec2fix_t tile_delta;
-  vec2fix_t direction;
-  vec2fix_t delta_dist;
-} ray = {0};
-
-struct player_ {
-  vec2fix_t position;
-  vec2fix_t direction;
-  fixang_t rotation;
-} player = {
-    {FIXED_FROM_INT(22), FIXED_FROM_INT(11)},
-    {FIXED_FROM_INT(-1), FIXED_FROM_INT(0)},
-    0
-};
-
 bool game_is_running = true;
 
+uint32_t frame_tics = 0;
 uint32_t frame_start = 0;
 uint32_t frame_count = 0;
 uint32_t frame_rate = 0;
@@ -94,18 +13,60 @@ uint32_t frame_rate = 0;
  * necesarias, reservaremos memoria y
  * pondremos el sistema en modo gráfico.
  */
-void game_init()
+bool game_init()
 {
-  fixed_start();
-  timer_start();
-  keyboard_start();
-  mouse_start();
-  video_start();
-  palette_start();
-  sb_start(); // soundblaster_start();
-  sb_play_file("APLAUSO.PCM");
+  clrscr();
+  _setcursortype(_NOCURSOR);
+  log_header("EGB %s", GAME_VERSION);
 
+  sleep(1);
+
+  log_line("Iniciando mouse...");
+  if (!mouse_start())
+  {
+    log_answer("[FAIL]");
+    return false;
+  }
+  log_answer("[OK]");
+
+  log_line("Iniciando keyboard...");
+  if (!keyboard_start())
+  {
+    log_answer("[FAIL]");
+    return false;
+  }
+  log_answer("[OK]");
+
+  log_line("Iniciando fixed point...");
+  fixed_start();
+  log_answer("[OK]");
+
+  log_line("Iniciando SoundBlaster...");
+  sb_start(); // soundblaster_start();
+  log_answer("[OK]");
+
+  log_line("Iniciando raycaster...");
+  raycaster_start();
+  // map_save_default();
+  log_answer("[OK]");
+
+  sleep(1);
+
+  log_line("Iniciando timer...");
+  timer_start();
+  log_answer("[OK]");
+
+  log_line("Iniciando video...");
+  video_start();
+  log_answer("[OK]");
+
+  log_line("Iniciando palette...");
+  palette_start();
+  log_answer("[OK]");
+
+  // sb_play_file("APLAUSO.PCM");
   fade_in(100);
+  return true;
 }
 
 /**
@@ -117,173 +78,80 @@ void game_input() {
 
   // Si pulsamos ALT + X, salimos del juego. Esto es muy
   // al estilo de DIV Games Studio.
-  if (keys[KEY_LEFT_ALT] && keys[KEY_X])
+  if (KEY_IS_PRESSED(KEY_LEFT_ALT) && KEY_IS_PRESSED(KEY_X))
   {
     game_is_running = false;
   }
 }
 
+
 /**
  * Actualizamos la lógica del juego.
  */
 void game_update() {
-  if (key_is_pressed(KEY_UP))
+  if (KEY_IS_PRESSED(KEY_W) || KEY_IS_PRESSED(KEY_UP))
   {
-    player.position.x += FIXED_MUL(player.direction.x, 0x4000);
-    player.position.y += FIXED_MUL(player.direction.y, 0x4000);
+    view.changed_position = true;
+    player.next_position.x = player.position.x + FIXED_MUL(player.direction.x, 0x1000);
+    player.next_position.y = player.position.y + FIXED_MUL(player.direction.y, 0x1000);
   }
-  else if (key_is_pressed(KEY_DOWN))
+  else if (KEY_IS_PRESSED(KEY_S) || KEY_IS_PRESSED(KEY_DOWN))
   {
-    player.position.x -= FIXED_MUL(player.direction.x, 0x4000);
-    player.position.y -= FIXED_MUL(player.direction.y, 0x4000);
+    view.changed_position = true;
+    player.next_position.x = player.position.x - FIXED_MUL(player.direction.x, 0x1000);
+    player.next_position.y = player.position.y - FIXED_MUL(player.direction.y, 0x1000);
   }
 
-  if (key_is_pressed(KEY_LEFT)) {
+  if (KEY_IS_PRESSED(KEY_A))
+  {
+    view.changed_position = true;
+    player.next_position.x = player.position.x + FIXED_MUL(player.direction.y, 0x1000);
+    player.next_position.y = player.position.y - FIXED_MUL(player.direction.x, 0x1000);
+  }
+  else if (KEY_IS_PRESSED(KEY_D))
+  {
+    view.changed_position = true;
+    player.next_position.x = player.position.x - FIXED_MUL(player.direction.y, 0x1000);
+    player.next_position.y = player.position.y + FIXED_MUL(player.direction.x, 0x1000);
+  }
+
+  if (KEY_IS_PRESSED(KEY_LEFT))
+  {
     player.rotation -= 0x100;
-  } else if (key_is_pressed(KEY_RIGHT)) {
+    view.changed_rotation = true;
+  }
+  else if (KEY_IS_PRESSED(KEY_RIGHT))
+  {
     player.rotation += 0x100;
+    view.changed_rotation = true;
   }
 
-  player.direction.x = FIXED_COS(player.rotation);
-  player.direction.y = FIXED_SIN(player.rotation);
+  if (view.changed_rotation) {
+    player.direction.x = FIXED_COS(player.rotation);
+    player.direction.y = FIXED_SIN(player.rotation);
 
-  view.position.x = player.position.x;
-  view.position.y = player.position.y;
+    view.direction.x = player.direction.x;
+    view.direction.y = player.direction.y;
 
-  view.direction.x = player.direction.x;
-  view.direction.y = player.direction.y;
-
-  view.plane.x = FIXED_MUL(-player.direction.y, 0xb000);
-  view.plane.y = FIXED_MUL(player.direction.x, 0xb000);
-}
-
-void raycaster_render()
-{
-  for (uint16_t x = 0; x < VIDEO_WIDTH; x++)
-  {
-    ray.x = (FIXED_FROM_INT(2 * x) / VIDEO_WIDTH) - FIXED_UNIT;
-
-    ray.direction.x = view.direction.x + FIXED_MUL(view.plane.x, ray.x);
-    ray.direction.y = view.direction.y + FIXED_MUL(view.plane.y, ray.x);
-
-    ray.delta_dist.x = ray.direction.x == 0 ? MAXINT : abs(fixed_div(FIXED_UNIT, ray.direction.x));
-    ray.delta_dist.y = ray.direction.y == 0 ? MAXINT : abs(fixed_div(FIXED_UNIT, ray.direction.y));
-
-    ray.tile.x = FIXED_FLOOR(view.position.x);
-    ray.tile.y = FIXED_FLOOR(view.position.y);
-
-    if (ray.direction.x < 0)
-    {
-      ray.step.x = FIXED_FROM_INT(-1);
-      ray.tile_delta.x = (view.position.x - FIXED_FLOOR(view.position.x));
-    }
-    else
-    {
-      ray.step.x = FIXED_FROM_INT(1);
-      ray.tile_delta.x = (FIXED_FLOOR(view.position.x) + FIXED_UNIT - view.position.x);
-    }
-
-    if (ray.direction.y < 0)
-    {
-      ray.step.y = FIXED_FROM_INT(-1);
-      ray.tile_delta.y = (view.position.y - FIXED_FLOOR(view.position.y));
-    }
-    else
-    {
-      ray.step.y = FIXED_FROM_INT(1);
-      ray.tile_delta.y = (FIXED_FLOOR(view.position.y) + FIXED_UNIT - view.position.y);
-    }
-
-    ray.side_dist.x = FIXED_MUL(ray.tile_delta.x, ray.delta_dist.x);
-    ray.side_dist.y = FIXED_MUL(ray.tile_delta.y, ray.delta_dist.y);
-
-    ray.hit = false;
-    ray.iterations = 0;
-    while (ray.hit == false)
-    {
-      ray.iterations++;
-      if (ray.side_dist.x < ray.side_dist.y)
-      {
-        ray.side_dist.x += ray.delta_dist.x;
-        ray.tile.x += ray.step.x;
-        ray.side = 0;
-      }
-      else
-      {
-        ray.side_dist.y += ray.delta_dist.y;
-        ray.tile.y += ray.step.y;
-        ray.side = 1;
-      }
-
-      ray.tilei.x = FIXED_TO_INT(ray.tile.x);
-      ray.tilei.y = FIXED_TO_INT(ray.tile.y);
-
-      if (ray.tilei.x < 0 || ray.tilei.y < 0 || ray.tilei.x >= MAP_WIDTH || ray.tilei.y >= MAP_HEIGHT)
-      {
-        ray.side = 2; // OUTSIDE.
-        ray.hit = true;
-      } else if (map[ray.tilei.x][ray.tilei.y] > 0) {
-        ray.hit = true;
-      }
-    }
-
-    if (ray.side == 0)
-      ray.perp_wall_dist = (ray.side_dist.x - ray.delta_dist.x);
-    else
-      ray.perp_wall_dist = (ray.side_dist.y - ray.delta_dist.y);
-
-    columns[x].z = ray.perp_wall_dist;
-    if (columns[x].z == 0)
-      columns[x].z = FIXED_UNIT;
-
-    columns[x].height = FIXED_TO_INT(fixed_div(FIXED_FROM_INT(VIDEO_HEIGHT), columns[x].z));
-
-    // calculate lowest and highest pixel to fill in current stripe
-    columns[x].draw_start = -(columns[x].height >> 1) + (VIDEO_HEIGHT >> 1);
-    if (columns[x].draw_start < RAYCASTER_MIN_Y)
-      columns[x].draw_start = RAYCASTER_MIN_Y;
-
-    columns[x].draw_end = (columns[x].height >> 1) + (VIDEO_HEIGHT >> 1);
-    if (columns[x].draw_end > RAYCASTER_MAX_Y)
-      columns[x].draw_end = RAYCASTER_MAX_Y;
-
-    for (int16_t y = columns[x].draw_start; y < columns[x].draw_end; y++)
-    {
-      uint8_t color = 0;
-      if (ray.side == 1)
-        color = 0x5;
-      else
-        color = 0x3;
-
-      VIDEO_PUT_PIXEL(x, y, color);
-    }
-  }
-}
-
-void map_render() {
-  const uint16_t position_y = 160;
-  for (uint16_t y = 0; y < MAP_HEIGHT; y++)
-  {
-    for (uint16_t x = 0; x < MAP_WIDTH; x++)
-    {
-      if (map[x][y] > 0)
-      {
-        video_put_pixel(x, y + position_y, 0x5);
-      }
-    }
+    view.plane.x = FIXED_MUL(-player.direction.y, 0xb000);
+    view.plane.y = FIXED_MUL(player.direction.x, 0xb000);
   }
 
-  video_put_pixel(
-    FIXED_TO_INT(player.position.x),
-    FIXED_TO_INT(player.position.y) + position_y,
-    0x0F
-  );
+  if (view.changed_position) {
+    entity_move(&player);
+
+    view.position.x = player.position.x;
+    view.position.y = player.position.y;
+  }
 }
 
 void debug_render() {
   // Imprimimos el número de tics y las coordenadas del ratón.
-  font_draw(0, 0, 0xF, "FPS: %d TIME: %d DURATION: %d START: %d", frame_rate, timer_tics, fade_duration_in_tics, fade_timer.start);
+  font_draw(0, 0, 0xF, "FPS: %d TIME: %d DURATION: %d START: %d", frame_rate, frame_tics, fade_duration_in_tics, fade_timer.start);
 #if 0
+  if (mouse.current.y > columns[mouse.current.x].draw_start
+   && mouse.current.y < columns[mouse.current.x].draw_end)
+    font_draw(0, 10, 0xF, "x: %d y: %d s: %d", columns[mouse.current.x].x, columns[mouse.current.x].y, columns[mouse.current.x].side);
   font_draw(0, 10, 0xF, "p.x: %.02f p.y: %.02f p.rot: %03d", FIXED_TO_FLOAT(player.position.x), FIXED_TO_FLOAT(player.position.y), FIXANG_TO_DEG(player.rotation));
   font_draw(0, 30, 0xF, "v.d.x: %.02f v.d.y: %.02f", FIXED_TO_FLOAT(view.direction.x), FIXED_TO_FLOAT(view.direction.y));
   font_draw(0, 20, 0xF, "v.p.x: %.02f v.p.y: %.02f", FIXED_TO_FLOAT(view.plane.x), FIXED_TO_FLOAT(view.plane.y));
@@ -294,21 +162,42 @@ void debug_render() {
   font_draw(0, 80, 0xF, "r.td.x: %.02f r.td.y: %.02f", FIXED_TO_FLOAT(ray.tile_delta.x), FIXED_TO_FLOAT(ray.tile_delta.y));
   font_draw(0, 90, 0xF, "r.s.x: %.02f r.s.y: %.02f r.s: %d r.h: %d", FIXED_TO_FLOAT(ray.step.x), FIXED_TO_FLOAT(ray.step.y), ray.side, ray.hit);
   font_draw(0, 100, 0xF, "r.t.x: %d r.t.y: %d r.i: %d", ray.tilei.x, ray.tilei.y, ray.iterations);
+
+  VIDEO_PUT_PIXEL(mouse.current.x, mouse.current.y, 0x0F);
+#endif
+
+#if 0
+  for (int8_t i = 0; i < 16; i++)
+  {
+    for (int8_t j = 0; j < 16; j++)
+    {
+      uint16_t x = i * 2;
+      uint16_t y = 120 + (j * 2);
+      uint8_t c = i * j;
+      VIDEO_PUT_PIXEL(x, y, c);
+      VIDEO_PUT_PIXEL((x + 1), y, c);
+      VIDEO_PUT_PIXEL((x + 1), (y + 1), c);
+      VIDEO_PUT_PIXEL(x , (y + 1), c);
+    }
+  }
 #endif
 
   if (fade_in_progress)
     video_fill_rect(0, 2, 2, 2, 4);
 
-  if (sb_playing)
+  if (player.collision == COLLISION_X)
     video_fill_rect(0, 0, 2, 2, 1);
+  else if (player.collision == COLLISION_Y)
+    video_fill_rect(0, 0, 2, 2, 2);
+  else if (player.collision == COLLISION_XY)
+    video_fill_rect(0, 0, 2, 2, 3);
 }
 
 /**
  * Renderizamos el juego.
  */
 void game_render() {
-  video_update();
-  video_clear();
+  video_render();
   fade_update();
   raycaster_render();
   map_render();
@@ -319,19 +208,18 @@ void game_render() {
  * El bucle principal del juego.
  */
 void game_loop() {
-
+  frame_tics = timer_tics;
   frame_count++;
-  if (timer_tics - frame_start >= 100)
+  if (frame_tics - frame_start >= 100)
   {
     frame_rate = frame_count;
     frame_count = 0;
-    frame_start = timer_tics;
+    frame_start = frame_tics;
   }
 
   game_input();
   game_update();
   game_render();
-
 }
 
 /**
@@ -345,6 +233,11 @@ void game_quit() {
   sb_stop();
   mouse_stop();
   keyboard_stop();
-  video_stop();
   timer_stop();
+  video_stop();
+
+  log_header("EGB %s", GAME_VERSION);
+  log_line("Gracias por jugar!\r\n");
+
+  _setcursortype(_NORMALCURSOR);
 }

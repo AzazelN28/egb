@@ -6,7 +6,7 @@
 
 #include "video.h"
 
-#define FONT_BUFFER_SIZE 1024
+#define FONT_BUFFER_SIZE 64
 #define FONT_DEFAULT_SIZE 5 * 7
 #define FONT_DEFAULT_WIDTH 5
 #define FONT_DEFAULT_HEIGHT 7

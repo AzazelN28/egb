@@ -2,6 +2,14 @@
 
 uint8_t *video_ptr = NULL;
 uint8_t video_buffer[VIDEO_BUFFER_SIZE];
+#ifdef VIDEO_ENABLE_UNCHAINED
+uint32_t video_pages[VIDEO_PAGES] = {
+  0x0000,
+  0x4000,
+  0x8000,
+  0xC000
+};
+#endif
 
 bool video_set_mode(uint32_t mode) {
   __dpmi_regs r;
@@ -54,9 +62,62 @@ void video_update() {
   memcpy(video_ptr, video_buffer, VIDEO_BUFFER_SIZE);
 }
 
+void video_render()
+{
+  while (inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE);
+  while (!(inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE));
+
+#ifdef VIDEO_ENABLE_UNCHAINED
+  outportb(VGA_SC_INDEX, VGA_MAP_MASK);
+  for (uint8_t plane = 0; plane < 4; plane++)
+  {
+    outportb(VGA_SC_DATA, 1 << (plane & VGA_PLANE_MASK));
+    uint32_t offset = 0;
+    for (uint16_t y = 0; y < VIDEO_HEIGHT; y++)
+    {
+      for (uint16_t x = plane; x < VIDEO_WIDTH; x += 4)
+      {
+        uint8_t c = video_buffer[y * VIDEO_WIDTH + x];
+        video_ptr[offset + (x >> 2)] = c;
+      }
+      offset += VIDEO_PLANE_WIDTH;
+    }
+  }
+/*
+  outportb(VGA_SC_INDEX, VGA_MAP_MASK);
+  for (uint8_t plane = 0; plane < 4; plane++) {
+    outportb(VGA_SC_DATA, 1 << (plane & VGA_PLANE_MASK));
+    for (uint8_t y = 0; y < 200; y++)
+    {
+      for (uint8_t px = 0; px < 80; px++)
+      {
+        uint16_t x = (px << 2);
+        video_ptr[y * 80 + px] = video_buffer[y * 320 + x];
+      }
+    }
+  }
+*/
+#else
+  memcpy(video_ptr, video_buffer, VIDEO_BUFFER_SIZE);
+#endif
+#ifdef VIDEO_ENABLE_CLEAR
+  // ESTO SE ZAMPA UNA CANTIDAD DE TIEMPO ABSURDA.
+  memset(video_buffer, 0, VIDEO_BUFFER_SIZE);
+#endif
+}
+
+#ifdef VIDEO_ENABLE_UNCHAINED
+void video_clear()
+{
+  outportb(VGA_SC_INDEX, VGA_MAP_MASK); /* select plane */
+  outportw(VGA_SC_DATA, VGA_ALL_PLANES);
+  memset(video_ptr, 0, 0x4000);
+}
+#else
 void video_clear() {
   memset(video_buffer, 0, VIDEO_BUFFER_SIZE);
 }
+#endif
 
 void video_unchained_enable()
 {
@@ -65,10 +126,7 @@ void video_unchained_enable()
   outportb(VGA_SC_DATA, 0x06);
 
   outportw(VGA_SC_INDEX, VGA_ALL_PLANES);
-  for (int32_t i = 0; i < 0x4000; i++)
-  {
-    video_ptr[i] = 0x00;
-  }
+  memset(video_ptr, 0, 0x4000);
 
   // Desactivamos la escritura de longs (4 bytes).
   outportb(VGA_CRTC_INDEX, VGA_UNDERLINE_LOC);
@@ -78,8 +136,6 @@ void video_unchained_enable()
   outportb(VGA_CRTC_INDEX, VGA_MODE_CONTROL);
   outportb(VGA_CRTC_DATA, 0xe3);
 }
-
-void video_unchained_clear() { memset(video_buffer, 0, VIDEO_BUFFER_SIZE); }
 
 void video_unchained_set_plane_mask(uint8_t plane)
 {

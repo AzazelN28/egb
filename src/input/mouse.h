@@ -3,6 +3,7 @@
 #include <dpmi.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "../math/vec2i.h"
 
@@ -19,9 +20,11 @@ typedef struct mouse_ {
   vec2i_t current;
   vec2i_t previous;
   vec2i_t delta;
-  int32_t buttons;
+  int8_t num_buttons;
+  int8_t buttons;
   bool left;
   bool right;
+  bool available;
 } mouse_t;
 
 extern mouse_t mouse;

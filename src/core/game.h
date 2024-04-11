@@ -9,12 +9,18 @@
 #include "../sound/speaker.h"
 #include "../sound/sb.h"
 #include "../math/fixed.h"
+#include "../game/map.h"
+#include "../game/entity.h"
+#include "../game/raycaster.h"
 #include "./timer.h"
+#include "./log.h"
 #include <stdbool.h>
 #include <stdio.h>
+#include <conio.h>
+#include <dos.h>
 
 extern bool game_is_running;
 
-void game_init();
+bool game_init();
 void game_loop();
 void game_quit();

@@ -6,8 +6,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 #define KEYBOARD_SIZE 128
+#define KEYBOARD_QUEUE_SIZE 32
 #define KEYBOARD_INTERRUPT 0x09
 #define KEYBOARD_CODE 0x60
 #define KEYBOARD_STATE 0x61
@@ -99,9 +102,12 @@
 #define KEY_F11 0x57
 #define KEY_F12 0x58
 
-extern uint8_t keys[KEYBOARD_SIZE];
+#define KEY_IS_PRESSED(k) (keys[k])
+#define KEY_IS_RELEASED(k) (!keys[k])
 
-void keyboard_start();
+extern volatile bool keys[KEYBOARD_SIZE];
+
+bool keyboard_start();
 void keyboard_stop();
 bool key_is_pressed(uint8_t key);
 bool key_is_released(uint8_t key);

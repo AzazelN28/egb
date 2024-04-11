@@ -15,7 +15,10 @@
 #define FIXED_FROM_FLOAT(f) ((fixed_t)(f * FIXED_UNIT))
 #define FIXED_TO_FLOAT(f) ((float)(f) / FIXED_UNIT)
 #define FIXED_DECIMALS(f) ((float)(f & FIXED_MASK) / FIXED_UNIT)
+#define FIXED_ABS(a) ((a) < 0 ? -(a) : (a))
 #define FIXED_FLOOR(f) (f & ~FIXED_MASK)
+#define FIXED_DIV2(a, b) (b == 0 ? 0 : (fixed_t)(((int64_t)a << FIXED_BITS) / ((int64_t)b)))
+#define FIXED_DIV(a, b) ((FIXED_ABS(a) >> 14 >= FIXED_ABS(b)) ? (a < 0 ? MININT : MAXINT) : FIXED_DIV2((a), (b)))
 #define FIXED_MUL(a, b) (fixed_t)(((int64_t)a * (int64_t)b) >> FIXED_BITS)
 #define FIXED_COS(a) fixed_sin_table[(a + FIXANG_90) & FIXANG_MASK]
 #define FIXED_SIN(a) fixed_sin_table[a]

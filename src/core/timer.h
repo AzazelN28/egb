@@ -5,6 +5,7 @@
 #include <dpmi.h>
 #include <go32.h>
 #include <pc.h>
+#include <dos.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -25,7 +26,7 @@
 
 extern volatile uint32_t timer_tics;
 
-void timer_start();
+bool timer_start();
 void timer_stop();
 
 typedef struct timer_

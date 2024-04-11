@@ -9,10 +9,20 @@
 #include <sys/nearptr.h>
 
 // #define VIDEO_ENABLE_UNCHAINED
+#define VIDEO_ENABLE_CLEAR
 
 #define VIDEO_WIDTH 320
 #define VIDEO_HEIGHT 200
+#define VIDEO_HALF_WIDTH 160
+#define VIDEO_HALF_HEIGHT 100
+
+#ifdef VIDEO_ENABLE_UNCHAINED
+#define VIDEO_PLANE_WIDTH 80
+#define VIDEO_PAGES 4
+#endif
+
 #define VIDEO_BUFFER_SIZE 64000
+
 #define VIDEO_INTERRUPT 0x10
 #define VIDEO_INPUT_STATUS 0x3DA
 #define VIDEO_VERTICAL_RETRACE 0x08
@@ -37,7 +47,7 @@
 #define VGA_UNDERLINE_LOC 0x14
 #define VGA_MODE_CONTROL 0x17
 
-#define VIDEO_PUT_PIXEL(x,y,c) video_buffer[y * VIDEO_WIDTH + x] = c
+#define VIDEO_PUT_PIXEL(x, y, c) video_buffer[y * VIDEO_WIDTH + x] = c
 
 extern uint8_t *video_ptr;
 extern uint8_t video_buffer[VIDEO_BUFFER_SIZE];
@@ -50,6 +60,7 @@ void video_sync();
 void video_update();
 
 void video_clear();
+void video_render();
 
 void video_unchained_enable();
 void video_unchained_clear();

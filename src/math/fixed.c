@@ -51,11 +51,13 @@ fixed_t fixed_mul(fixed_t a, fixed_t b)
   return ((int64_t)a * (int64_t)b) >> FIXED_BITS;
 }
 
-fixed_t fixed_div2(fixed_t a, fixed_t b)
+inline fixed_t fixed_div2(fixed_t a, fixed_t b)
 {
+#if 1
   int64_t c;
   c = ((int64_t)a << FIXED_BITS) / ((int64_t)b);
   return (fixed_t) c;
+#endif
 #if 0
   double c;
   c = ((double)a) / ((double)b) * FIXED_UNIT;
@@ -67,11 +69,11 @@ fixed_t fixed_div2(fixed_t a, fixed_t b)
 #endif
 }
 
-fixed_t fixed_div(fixed_t a, fixed_t b)
+inline fixed_t fixed_div(fixed_t a, fixed_t b)
 {
-  if (abs(a) >> 14 >= abs(b))
+  if (FIXED_ABS(a) >> 14 >= FIXED_ABS(b))
     return a < 0 ? MININT : MAXINT;
-  return fixed_div2(a, b);
+  return FIXED_DIV2((a), (b));
 }
 
 fixed_t fixed_cos(fixang_t angle)

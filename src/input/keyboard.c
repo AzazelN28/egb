@@ -1,35 +1,45 @@
 #include "keyboard.h"
 
-uint8_t keys[KEYBOARD_SIZE];
-
+volatile bool keys[KEYBOARD_SIZE];
 static _go32_dpmi_seginfo prev_handler, new_handler;
 
-void keyboard_handler() {
-  uint8_t code, state, is_pressed = 1;
-  code = inportb(KEYBOARD_CODE);
-  state = inportb(KEYBOARD_STATE);
+static void keyboard_handler() {
+  uint8_t code = inportb(KEYBOARD_CODE);
   if (code & KEYBOARD_BREAK) {
-    is_pressed = 0;
-    code -= KEYBOARD_BREAK;
+    keys[code & (KEYBOARD_BREAK - 1)] = false;
   } else {
-    is_pressed = 1;
+    keys[code] = true;
   }
-  keys[code] = is_pressed;
+  outportb(0x20, 0x20);
 }
 
-void keyboard_start() {
-  _go32_dpmi_get_protected_mode_interrupt_vector(KEYBOARD_INTERRUPT,
-                                                 &prev_handler);
+// Esto es sólo una marca para saber dónde termina el código
+static void keyboard_handler_end() {}
 
+bool keyboard_start() {
+  _go32_dpmi_get_protected_mode_interrupt_vector(
+    KEYBOARD_INTERRUPT,
+    &prev_handler
+  );
   new_handler.pm_offset = (uint32_t)keyboard_handler;
   new_handler.pm_selector = _go32_my_cs();
-
-  _go32_dpmi_chain_protected_mode_interrupt_vector(KEYBOARD_INTERRUPT,
-                                                   &new_handler);
+  _go32_dpmi_allocate_iret_wrapper(&new_handler);
+  _go32_dpmi_set_protected_mode_interrupt_vector(
+    KEYBOARD_INTERRUPT,
+    &new_handler
+  );
+  return true;
 }
 
 void keyboard_stop() {
-  _go32_dpmi_set_protected_mode_interrupt_vector(8, &prev_handler);
+  if (_go32_dpmi_set_protected_mode_interrupt_vector(
+    KEYBOARD_INTERRUPT,
+    &prev_handler
+  ) == -1) {
+    return;
+  } else {
+    _go32_dpmi_free_iret_wrapper(&new_handler);
+  }
 }
 
 bool key_is_pressed(uint8_t key) {

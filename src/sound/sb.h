@@ -10,6 +10,8 @@
 #include <go32.h>
 #include <pc.h>
 
+#include "../core/log.h"
+
 #define SB_DMA_BUFFER_SIZE 32768
 
 #define SB_PORT_FM_STATUS 0x0

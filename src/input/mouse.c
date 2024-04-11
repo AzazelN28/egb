@@ -1,18 +1,20 @@
 #include "mouse.h"
 
-mouse_t mouse;
+mouse_t mouse = {0};
 
 bool mouse_start() {
   __dpmi_regs r;
-
   r.x.ax = MOUSE_INIT;
-
   if (__dpmi_int(MOUSE_INTERRUPT, &r) == -1)
     return false;
 
   if (r.x.ax == 0xFFFF)
-    return false;
-
+    mouse.available = false;
+  else if (r.x.ax == 0x0000)
+  {
+    mouse.available = true;
+    mouse.num_buttons = r.x.bx;
+  }
   return true;
 }
 
@@ -29,6 +31,10 @@ void mouse_hide() {
 }
 
 void mouse_get_status() {
+  if (!mouse.available) {
+    return;
+  }
+
   __dpmi_regs r;
   r.x.ax = MOUSE_GET_STATUS;
   __dpmi_int(MOUSE_INTERRUPT, &r);
@@ -36,7 +42,7 @@ void mouse_get_status() {
   // NOTA: Los valores de x e y son de 0 a 639 y de 0 a 199 respectivamente
   // independientemente del modo de vídeo.
   vec2i_copy(&mouse.previous, &mouse.current);
-  vec2i_set(&mouse.current, r.x.cx >> 1, r.x.dx);
+  vec2i_set(&mouse.current, (r.x.cx >> 1), r.x.dx);
   vec2i_sub(&mouse.delta, &mouse.current, &mouse.previous);
 
   mouse.buttons = r.x.bx;

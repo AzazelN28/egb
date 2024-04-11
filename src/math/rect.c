@@ -25,16 +25,16 @@ rect_t *rect_clone(rect_t *r) {
   return rect_new(r->position.x, r->position.y, r->size.x, r->size.y);
 }
 
-bool inline rect_contains(rect_t *r, int32_t x, int32_t y) {
+bool rect_contains(rect_t *r, int32_t x, int32_t y) {
   return x >= r->position.x && x < r->position.x + r->size.x &&
          y >= r->position.y && y < r->position.y + r->size.y;
 }
 
-bool inline rect_contains_point(rect_t *r, point_t *v) {
+bool rect_contains_point(rect_t *r, point_t *v) {
   return rect_contains(r, v->x, v->y);
 }
 
-bool inline rect_intersects(rect_t *a, rect_t *b) {
+bool rect_intersects(rect_t *a, rect_t *b) {
   if (a->position.x + a->size.x < b->position.x)
     return false;
   if (a->position.x > b->position.x + b->size.x)

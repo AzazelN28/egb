@@ -2,7 +2,7 @@
 
 fade_t fade_direction = FADE_IN;
 bool fade_in_progress = false;
-uint16_t fade_progress = 0;
+uint32_t fade_progress = 0;
 uint32_t fade_duration_in_tics = 0;
 timer_t fade_timer = { .start = 0 };
 uint8_t fade_from[PALETTE_BYTES];
@@ -70,18 +70,6 @@ void fade_color(uint32_t duration_in_tics, uint8_t r, uint8_t g, uint8_t b)
   memcpy(fade_palette, fade_from, PALETTE_BYTES);
 }
 
-int32_t linear(uint16_t progress, int32_t from, int32_t to)
-{
-  return (from + (to - from) * progress) / 0xFFFF;
-}
-
-int32_t clamp(int32_t value, int32_t min, int32_t max)
-{
-  if (value < min) return min;
-  if (value > max) return max;
-  return value;
-}
-
 /**
  * Actualiza la paleta actual utilizada para realizar
  * el efecto de fade.
@@ -95,11 +83,14 @@ void fade_update()
   if (elapsed >= fade_duration_in_tics) {
     elapsed = fade_duration_in_tics;
     fade_in_progress = false;
+    fade_progress = 0;
+    palette_set_all(palette_current);
+    return;
   }
 
   fade_progress = 0xFFFF * elapsed / fade_duration_in_tics;
   for (uint16_t i = 0; i < PALETTE_BYTES; i++) {
-    fade_palette[i] = linear(fade_progress, fade_from[i], fade_to[i]);
+    fade_palette[i] = RANGE_LINEAR(fade_progress, fade_from[i], fade_to[i]);
   }
   palette_set_all(fade_palette);
 }

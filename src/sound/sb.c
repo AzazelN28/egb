@@ -7,7 +7,11 @@ static _go32_dpmi_seginfo prev_handler, new_handler;
 static _go32_dpmi_seginfo dma_buffer;
 static uint32_t dma_offset = 0;
 
-static bool inline sb_has_special_irq()
+/**
+ * Comprobamos si la SB tiene configurado un IRQ
+ * especial.
+ */
+static bool sb_has_special_irq()
 {
   return sb.irq == 2 || sb.irq == 10 || sb.irq == 11;
 }
@@ -18,8 +22,8 @@ static bool inline sb_has_special_irq()
 void sb_irq_handler()
 {
   inportb(sb.base + SB_PORT_DSP_READ_STATUS);
-  outportb(0x20, 0x20);
   sb_playing = false;
+  outportb(0x20, 0x20);
 }
 
 /**
@@ -40,18 +44,27 @@ bool sb_dsp_reset(uint16_t port)
   return false;
 }
 
+/**
+ * Leemos datos del DSP.
+ */
 uint8_t sb_dsp_read()
 {
   while ((inportb(sb.base + SB_PORT_DSP_READ_STATUS) & SB_STATUS_DATA_AVAILABLE) != SB_STATUS_DATA_AVAILABLE);
   return inportb(sb.base + SB_PORT_DSP_READ);
 }
 
+/**
+ * Escribimos datos en el DSP.
+ */
 void sb_dsp_write(uint8_t command)
 {
   while ((inportb(sb.base + SB_PORT_DSP_WRITE) & SB_STATUS_DATA_AVAILABLE) == SB_STATUS_DATA_AVAILABLE);
   outportb(sb.base + SB_PORT_DSP_WRITE, command);
 }
 
+/**
+ * 
+ */
 void sb_set_base_from_hex(uint16_t base) {
   sb.base = 0x200 + (((base - 200) / 10) << 4);
 }
@@ -168,10 +181,10 @@ bool sb_play_file(const char* filename) {
 void sb_start() {
   char* blaster_env = getenv("BLASTER");
   if (blaster_env == NULL) {
-    printf("No se ha encontrado la variable de entorno BLASTER\n");
+    log_line("  BLASTER Not set\n");
     return;
   } else {
-    printf("BLASTER: %s\n", blaster_env);
+    log_line("  BLASTER Set: %s\n", blaster_env);
   }
   sscanf(
     blaster_env,
@@ -186,17 +199,17 @@ void sb_start() {
 
   sb_set_base_from_hex(sb.base);
 
-  printf("Base I/O Port: 0x%03X\n", sb.base);
-  printf("IRQ: %d\n", sb.irq);
-  printf("DMA 8-bit: %d\n", sb.dma8);
-  printf("DMA 16-bit: %d\n", sb.dma16);
-  printf("Mixer I/O Port: %d\n", sb.mixer);
-  printf("MPU-401 I/O Port: %d\n", sb.mpu401);
+  log_line("  Base I/O Port: 0x%03X\n", sb.base);
+  log_line("  IRQ: %d\n", sb.irq);
+  log_line("  DMA 8-bit: %d\n", sb.dma8);
+  log_line("  DMA 16-bit: %d\n", sb.dma16);
+  log_line("  Mixer I/O Port: %d\n", sb.mixer);
+  log_line("  MPU-401 I/O Port: %d\n", sb.mpu401);
 
   if (sb_dsp_reset(sb.base)) {
-    printf("DSP Reset OK\n");
+    log_line("  DSP Reset OK\n");
   } else {
-    printf("DSP Reset Failed\n");
+    log_line("  DSP Reset Failed\n");
   }
 
   sb_irq_init();

@@ -5,6 +5,7 @@
 
 #include "palette.h"
 #include "../core/timer.h"
+#include "../math/range.h"
 
 typedef enum fade {
   FADE_IN,
@@ -13,7 +14,7 @@ typedef enum fade {
 
 extern fade_t fade_direction;
 extern bool fade_in_progress;
-extern uint16_t fade_progress;
+extern uint32_t fade_progress;
 extern uint32_t fade_duration_in_tics;
 extern timer_t fade_timer;
 
