@@ -39,11 +39,14 @@ void mouse_get_status() {
   r.x.ax = MOUSE_GET_STATUS;
   __dpmi_int(MOUSE_INTERRUPT, &r);
 
-  // NOTA: Los valores de x e y son de 0 a 639 y de 0 a 199 respectivamente
-  // independientemente del modo de vídeo.
-  vec2i_copy(&mouse.previous, &mouse.current);
-  vec2i_set(&mouse.current, (r.x.cx >> 1), r.x.dx);
-  vec2i_sub(&mouse.delta, &mouse.current, &mouse.previous);
+  mouse.previous.x = mouse.current.x;
+  mouse.previous.y = mouse.current.y;
+
+  mouse.current.x = r.x.cx >> 1;
+  mouse.current.y = r.x.dx;
+
+  mouse.delta.x = mouse.current.x - mouse.previous.x;
+  mouse.delta.y = mouse.current.y - mouse.previous.y;
 
   mouse.buttons = r.x.bx;
   mouse.left = (r.x.bx & MOUSE_LEFT_BUTTON_MASK) ? true : false;

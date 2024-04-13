@@ -17,9 +17,11 @@
 #define FIXED_DECIMALS(f) ((float)(f & FIXED_MASK) / FIXED_UNIT)
 #define FIXED_ABS(a) ((a) < 0 ? -(a) : (a))
 #define FIXED_FLOOR(f) (f & ~FIXED_MASK)
-#define FIXED_DIV2(a, b) (b == 0 ? 0 : (fixed_t)(((int64_t)a << FIXED_BITS) / ((int64_t)b)))
-#define FIXED_DIV(a, b) ((FIXED_ABS(a) >> 14 >= FIXED_ABS(b)) ? (a < 0 ? MININT : MAXINT) : FIXED_DIV2((a), (b)))
-#define FIXED_MUL(a, b) (fixed_t)(((int64_t)a * (int64_t)b) >> FIXED_BITS)
+#define FIXED_DIV2(a, b) (b == 0 ? 0 : (fixed_t)(((int64_t)a << FIXED_BITS) / (b)))
+// #define FIXED_DIV(a, b) ((FIXED_ABS(a) >> 14 >= FIXED_ABS(b)) ? (a < 0 ? MININT : MAXINT) : FIXED_DIV2((a), (b)))
+#define FIXED_DIV(a, b) (fixed_t)(((int64_t)a << FIXED_BITS) / b)
+#define FIXED_MUL(a, b) (fixed_t)(((int64_t)a * b) >> FIXED_BITS)
+
 #define FIXED_COS(a) fixed_sin_table[(a + FIXANG_90) & FIXANG_MASK]
 #define FIXED_SIN(a) fixed_sin_table[a]
 
@@ -35,17 +37,12 @@
 #define MAXINT ((int32_t)0x7fffffff)
 #define MININT ((int32_t)0x80000000)
 
+#define FIXED_NEG_ONE 0xFFFF0000
+#define FIXED_POS_ONE 0x00010000
+
 typedef int32_t fixed_t;
 typedef uint16_t fixang_t;
 
 extern fixed_t fixed_sin_table[FIXANG_SIZE];
 
 void fixed_start();
-fixed_t fixed_from_int(int16_t i);
-fixed_t fixed_from_float(float f);
-int16_t fixed_to_int(fixed_t f);
-float fixed_to_float(fixed_t f);
-fixed_t fixed_mul(fixed_t a, fixed_t b);
-fixed_t fixed_div(fixed_t a, fixed_t b);
-fixed_t fixed_cos(fixang_t angle);
-fixed_t fixed_sin(fixang_t angle);

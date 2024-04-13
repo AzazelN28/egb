@@ -6,17 +6,51 @@ DATE=$(shell date +'%Y.%m.%d.%H%M%S')
 all:
 	mkdir -p dist
 	gcc -o dist/game.exe \
+		-Wall \
+		-Wextra \
+		-Wshadow \
+		-Winit-self \
+		-pedantic \
 		-DGAME_VERSION=\"${DATE}\" \
+		-mcpu=i486 \
+		-fomit-frame-pointer \
 		-funroll-loops \
+		-ffast-math \
 		-O2 \
 		src/main.c \
 		src/math/fixed.c \
 		src/math/rand.c \
 		src/math/range.c \
-		src/math/point.c \
-		src/math/rect.c \
-		src/math/vec2f.c \
-		src/math/vec2i.c \
+		src/core/game.c \
+		src/core/timer.c \
+		src/core/log.c \
+		src/video/video.c \
+		src/video/palette.c \
+		src/video/font.c \
+		src/video/fade.c \
+		src/input/keyboard.c \
+		src/input/mouse.c \
+		src/sound/speaker.c \
+		src/sound/sb.c \
+		src/sound/opl2.c \
+		src/game/map.c \
+		src/game/entity.c \
+		src/game/raycaster.c \
+		-lm
+
+asm:
+	mkdir -p dist
+	gcc -S \
+		-DGAME_VERSION=\"${DATE}\" \
+		-mcpu=i486 \
+		-fomit-frame-pointer \
+		-funroll-loops \
+		-ffast-math \
+		-O2 \
+		src/main.c \
+		src/math/fixed.c \
+		src/math/rand.c \
+		src/math/range.c \
 		src/core/game.c \
 		src/core/timer.c \
 		src/core/log.c \
@@ -46,3 +80,4 @@ iso:
 
 clean:
 	rm dist/game.exe
+	rm *.s

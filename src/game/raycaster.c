@@ -23,26 +23,27 @@ void raycaster_start()
     }
   }
 #else
-  uint8_t fg = 0x03, bg = 0x05, cols = 4, rows = 4, col = 0, row = 0;
+  uint8_t fg = 0x03, bg = 0x05, num_cols = 4, num_rows = 4, col = 0, row = 0;
   for (int y = 0; y < RAYCASTER_TEXTURE_SIZE; y++)
   {
-    row = (y / (RAYCASTER_TEXTURE_SIZE / rows));
+    row = (y / (RAYCASTER_TEXTURE_SIZE / num_rows));
     for (int x = 0; x < RAYCASTER_TEXTURE_SIZE; x++)
     {
-      col = (x / (RAYCASTER_TEXTURE_SIZE / cols));
+      col = (x / (RAYCASTER_TEXTURE_SIZE / num_cols));
       checker_texture[y * RAYCASTER_TEXTURE_SIZE + x] = (row + col) % 2 ? fg : bg;
     }
   }
 #endif
 
   // Precalculamos todas las distancias de las filas.
-  for (int y = 0; y < VIDEO_HALF_HEIGHT; y++)
+  for (int8_t y = 0; y < VIDEO_HALF_HEIGHT; y++)
   {
-    int p = VIDEO_HALF_HEIGHT - y;
+    int8_t p = VIDEO_HALF_HEIGHT - y;
     row_distances[y] = FIXED_DIV(RAYCASTER_VIDEO_FIXED_HALF_HEIGHT, FIXED_FROM_INT(p));
   }
 
-  for (int x = 0; x < VIDEO_WIDTH; x++)
+  // Precalculamos los valores de x.
+  for (int16_t x = 0; x < VIDEO_WIDTH; x++)
   {
     xs[x] = (FIXED_FROM_INT(2 * x) / VIDEO_WIDTH) - FIXED_UNIT;
   }
@@ -160,8 +161,8 @@ void raycaster_render()
     }
 
     columns[x].u = FIXED_ABS(FIXED_TO_INT(columns[x].tex_x));
-    columns[x].x = ray.tilei.x;
-    columns[x].y = ray.tilei.y;
+    columns[x].tile.x = ray.tilei.x;
+    columns[x].tile.y = ray.tilei.y;
     columns[x].side = ray.side;
     columns[x].z = ray.perp_wall_dist;
     if (columns[x].z == 0)
@@ -173,14 +174,16 @@ void raycaster_render()
     columns[x].inc_y = FIXED_DIV(RAYCASTER_TEXTURE_FIXED_SIZE, columns[x].fix_height);
     columns[x].tex_y = 0;
 
-    columns[x].draw_start = -(columns[x].half_height) + VIDEO_HALF_HEIGHT;
+    columns[x].draw_start = columns[x].draw_end = VIDEO_HALF_HEIGHT;
+    columns[x].draw_start += -columns[x].half_height;
     if (columns[x].draw_start < RAYCASTER_MIN_Y)
     {
-      columns[x].tex_y += FIXED_MUL(FIXED_FROM_INT(RAYCASTER_MIN_Y - columns[x].draw_start), columns[x].inc_y);
+      //columns[x].tex_y += FIXED_MUL(FIXED_FROM_INT((RAYCASTER_MIN_Y - columns[x].draw_start)), columns[x].inc_y);
+      columns[x].tex_y += (RAYCASTER_MIN_Y - columns[x].draw_start) * columns[x].inc_y;
       columns[x].draw_start = RAYCASTER_MIN_Y;
     }
 
-    columns[x].draw_end = (columns[x].half_height) + VIDEO_HALF_HEIGHT;
+    columns[x].draw_end += columns[x].half_height;
     if (columns[x].draw_end > RAYCASTER_MAX_Y)
     {
       columns[x].draw_end = RAYCASTER_MAX_Y;
@@ -199,8 +202,8 @@ void raycaster_render()
         fixed_t floor_x = view.position.x + floor_step_x + FIXED_MUL(row_distances[y], rows.start.x);
         fixed_t floor_y = view.position.y + floor_step_y + FIXED_MUL(row_distances[y], rows.start.y);
 
-        uint16_t u = FIXED_TO_INT(FIXED_MUL(RAYCASTER_TEXTURE_FIXED_SIZE, floor_x - FIXED_FLOOR(floor_x))) & (RAYCASTER_TEXTURE_SIZE - 1);
-        uint16_t v = FIXED_TO_INT(FIXED_MUL(RAYCASTER_TEXTURE_FIXED_SIZE, floor_y - FIXED_FLOOR(floor_y))) & (RAYCASTER_TEXTURE_SIZE - 1);
+        uint8_t u = FIXED_TO_INT(RAYCASTER_TEXTURE_SIZE * (floor_x - FIXED_FLOOR(floor_x))) & (RAYCASTER_TEXTURE_SIZE - 1);
+        uint8_t v = FIXED_TO_INT(RAYCASTER_TEXTURE_SIZE * (floor_y - FIXED_FLOOR(floor_y))) & (RAYCASTER_TEXTURE_SIZE - 1);
 
         // TECHO
         uint8_t color = checker_texture[RAYCASTER_TEXTURE_SIZE * v + u];
@@ -216,55 +219,23 @@ void raycaster_render()
       continue;
 
     // PAREDES
-    for (uint8_t y = columns[x].draw_start; y < columns[x].draw_end; y++)
+    // TODO: Utilizar el truco de Carmack en DOOM de que las texturas están
+    //       volteadas 90º. Así podremos hacer algo del estilo de
+    //       checker_texture[RAYCASTER_TEXTURE_SIZE * columns[x].u + columns[x].v]
+    for (uint8_t y = columns[x].draw_start; y < VIDEO_HALF_HEIGHT; y++)
     {
       columns[x].v = FIXED_TO_INT(columns[x].tex_y);
-      uint8_t color = checker_texture[(uint32_t)columns[x].v * RAYCASTER_TEXTURE_SIZE + (uint32_t)columns[x].u];
       columns[x].tex_y += columns[x].inc_y;
+      uint8_t color = checker_texture[RAYCASTER_TEXTURE_SIZE * columns[x].v + columns[x].u];
 
       VIDEO_PUT_PIXEL(x, y, color);
+
+      columns[x].v = FIXED_TO_INT(RAYCASTER_TEXTURE_FIXED_SIZE - columns[x].tex_y);
+      color = checker_texture[RAYCASTER_TEXTURE_SIZE * columns[x].v + columns[x].u];
+      VIDEO_PUT_PIXEL(x, (VIDEO_HEIGHT - y - 1), color);
     }
   }
 
   view.changed_position = false;
   view.changed_rotation = false;
-#if 0
-  for (uint16_t y = RAYCASTER_MIN_Y; y < VIDEO_HALF_HEIGHT; y++)
-  {
-    if (row_distances[y] > RAYCASTER_MAX_DRAWING_Z)
-      continue;
-
-    fixed_t floor_step_x = FIXED_MUL(row_distances[y], whatever_x);
-    fixed_t floor_step_y = FIXED_MUL(row_distances[y], whatever_y);
-
-    fixed_t floor_x = view.position.x + FIXED_MUL(row_distances[y], ray_dir_x0);
-    fixed_t floor_y = view.position.y + FIXED_MUL(row_distances[y], ray_dir_y0);
-
-    for (uint16_t x = 0; x < VIDEO_WIDTH; ++x)
-    {
-      if (y >= columns[x].draw_start)
-      {
-        floor_x += floor_step_x;
-        floor_y += floor_step_y;
-        continue;
-      }
-
-      uint16_t u = FIXED_TO_INT(FIXED_MUL(RAYCASTER_TEXTURE_FIXED_SIZE, floor_x - FIXED_FLOOR(floor_x))) & (RAYCASTER_TEXTURE_SIZE - 1);
-      uint16_t v = FIXED_TO_INT(FIXED_MUL(RAYCASTER_TEXTURE_FIXED_SIZE, floor_y - FIXED_FLOOR(floor_y))) & (RAYCASTER_TEXTURE_SIZE - 1);
-
-      // TECHO
-      uint8_t color = checker_texture[RAYCASTER_TEXTURE_SIZE * v + u];
-      VIDEO_PUT_PIXEL(x, y, color);
-
-      // SUELO
-      if ((VIDEO_HEIGHT - y - 1) < RAYCASTER_MAX_Y)
-      {
-        VIDEO_PUT_PIXEL(x, (VIDEO_HEIGHT - y - 1), color);
-      }
-
-      floor_x += floor_step_x;
-      floor_y += floor_step_y;
-    }
-  }
-#endif
 }

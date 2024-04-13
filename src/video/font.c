@@ -1,8 +1,8 @@
 #include "font.h"
 
-uint16_t font_id = 0;
+int16_t font_id = 0;
 font_t fonts[MAX_FONTS];
-uint8_t font_buffer[FONT_BUFFER_SIZE];
+char font_buffer[FONT_BUFFER_SIZE];
 
 uint8_t font[256][5 * 7] = {
   // 00
@@ -2328,12 +2328,18 @@ uint8_t font[256][5 * 7] = {
 };
 
 
-uint16_t font_load(const char *filename)
+int16_t font_load(const char *filename)
 {
+  FILE *file = fopen(filename, "rb");
+  if (file == NULL) {
+    return -1;
+  }
 
+  fclose(file);
+  return 0;
 }
 
-void font_unload(uint16_t id)
+void font_unload(int16_t id)
 {
 
 }

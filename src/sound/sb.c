@@ -8,15 +8,6 @@ static _go32_dpmi_seginfo dma_buffer;
 static uint32_t dma_offset = 0;
 
 /**
- * Comprobamos si la SB tiene configurado un IRQ
- * especial.
- */
-static bool sb_has_special_irq()
-{
-  return sb.irq == 2 || sb.irq == 10 || sb.irq == 11;
-}
-
-/**
  * Este es el manejador de IRQ.
  */
 void sb_irq_handler()
@@ -63,7 +54,7 @@ void sb_dsp_write(uint8_t command)
 }
 
 /**
- * 
+ *
  */
 void sb_set_base_from_hex(uint16_t base) {
   sb.base = 0x200 + (((base - 200) / 10) << 4);

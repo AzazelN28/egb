@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "../math/vec2i.h"
+#include "../math/vec2.h"
 
 #define MOUSE_INIT 0x00
 #define MOUSE_SHOW 0x01
@@ -17,9 +17,9 @@
 #define MOUSE_RIGHT_BUTTON_MASK 0x02
 
 typedef struct mouse_ {
-  vec2i_t current;
-  vec2i_t previous;
-  vec2i_t delta;
+  vec2int16_t current;
+  vec2int16_t previous;
+  vec2int16_t delta;
   int8_t num_buttons;
   int8_t buttons;
   bool left;

@@ -9,7 +9,7 @@ void fixed_start()
     for (fixang_t i = 0; i < FIXANG_MAX; i++)
     {
       float angle = (float)i / (float)FIXANG_MAX * M_PI * 2.0;
-      fixed_sin_table[i] = fixed_from_float(sinf(angle));
+      fixed_sin_table[i] = FIXED_FROM_FLOAT(sinf(angle));
     }
 
     // Intentamos guardar la tabla del seno
@@ -24,64 +24,4 @@ void fixed_start()
     fread(fixed_sin_table, sizeof(fixed_t), FIXANG_SIZE, file);
     fclose(file);
   }
-}
-
-fixed_t fixed_from_int(int16_t i)
-{
-  return i << FIXED_BITS;
-}
-
-fixed_t fixed_from_float(float f)
-{
-  return (fixed_t)(f * FIXED_UNIT);
-}
-
-int16_t fixed_to_int(fixed_t f)
-{
-  return f >> FIXED_BITS;
-}
-
-float fixed_to_float(fixed_t f)
-{
-  return (float)f / FIXED_UNIT;
-}
-
-fixed_t fixed_mul(fixed_t a, fixed_t b)
-{
-  return ((int64_t)a * (int64_t)b) >> FIXED_BITS;
-}
-
-inline fixed_t fixed_div2(fixed_t a, fixed_t b)
-{
-#if 1
-  int64_t c;
-  c = ((int64_t)a << FIXED_BITS) / ((int64_t)b);
-  return (fixed_t) c;
-#endif
-#if 0
-  double c;
-  c = ((double)a) / ((double)b) * FIXED_UNIT;
-  if (c >= 2147483648.0 || c < -2147483648.0)
-  {
-    // I_Error("FixedDiv: divide by zero");
-  }
-  return (fixed_t)c;
-#endif
-}
-
-inline fixed_t fixed_div(fixed_t a, fixed_t b)
-{
-  if (FIXED_ABS(a) >> 14 >= FIXED_ABS(b))
-    return a < 0 ? MININT : MAXINT;
-  return FIXED_DIV2((a), (b));
-}
-
-fixed_t fixed_cos(fixang_t angle)
-{
-  return fixed_sin_table[(angle + FIXANG_90) & FIXANG_MASK];
-}
-
-fixed_t fixed_sin(fixang_t angle)
-{
-  return fixed_sin_table[angle];
 }

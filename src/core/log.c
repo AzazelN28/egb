@@ -6,7 +6,7 @@ void log_header(const char *fmt, ...)
 {
   log_y = 1;
 
-  uint8_t buffer[100] = {0};
+  char buffer[100] = {0};
 
   textbackground(BLUE);
   textcolor(YELLOW);
@@ -26,7 +26,7 @@ void log_header(const char *fmt, ...)
 
 void log_line(const char *fmt, ...)
 {
-  uint8_t buffer[100] = {0};
+  char buffer[100] = {0};
 
   va_list args;
   va_start(args, fmt);
@@ -41,7 +41,7 @@ void log_line(const char *fmt, ...)
 
 void log_answer(const char *fmt, ...)
 {
-  uint8_t buffer[100] = {0};
+  char buffer[100] = {0};
 
   va_list args;
   va_start(args, fmt);

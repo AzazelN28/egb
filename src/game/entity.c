@@ -3,18 +3,19 @@
 entity_t player = {
     {FIXED_FROM_INT(22), FIXED_FROM_INT(10)},
     {FIXED_FROM_INT(22), FIXED_FROM_INT(10)},
-    {FIXED_FROM_INT(-1), FIXED_FROM_INT(0)},
-    0, 0};
+    {FIXED_NEG_ONE, 0},
+    0,
+    0};
 
 bool entity_try_move(entity_t *entity)
 {
   // 0x3fff == 0.25
   // 0x7fff == 0.5
   // 0xffff == 0.9999
-  int8_t minx = FIXED_TO_INT(entity->position.x - 0x3fff);
-  int8_t miny = FIXED_TO_INT(entity->position.y - 0x3fff);
-  int8_t maxx = FIXED_TO_INT(entity->position.x + 0x3fff);
-  int8_t maxy = FIXED_TO_INT(entity->position.y + 0x3fff);
+  int8_t minx = FIXED_TO_INT((entity->position.x - 0x3fff));
+  int8_t miny = FIXED_TO_INT((entity->position.y - 0x3fff));
+  int8_t maxx = FIXED_TO_INT((entity->position.x + 0x3fff));
+  int8_t maxy = FIXED_TO_INT((entity->position.y + 0x3fff));
 
   for (int8_t y = miny; y <= maxy; y++)
   {

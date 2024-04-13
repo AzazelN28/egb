@@ -40,8 +40,7 @@ typedef struct view_
 typedef struct column_
 {
   uint8_t side;
-  uint8_t x;
-  uint8_t y;
+  vec2int8_t tile;
   fixed_t z;
   uint8_t u;
   uint8_t v;
@@ -67,14 +66,14 @@ typedef struct rows_
 typedef struct ray_
 {
   bool hit;
-  int16_t iterations;
+  uint8_t iterations;
   uint8_t side;
   fixed_t x;
   fixed_t wall_x;
   fixed_t tex_x;
   fixed_t perp_wall_dist;
   vec2fix_t tile;
-  vec2int_t tilei;
+  vec2int8_t tilei;
   vec2fix_t step;
   vec2fix_t side_dist;
   vec2fix_t tile_delta;

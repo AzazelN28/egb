@@ -13,9 +13,6 @@ static void keyboard_handler() {
   outportb(0x20, 0x20);
 }
 
-// Esto es sólo una marca para saber dónde termina el código
-static void keyboard_handler_end() {}
-
 bool keyboard_start() {
   _go32_dpmi_get_protected_mode_interrupt_vector(
     KEYBOARD_INTERRUPT,

@@ -10,6 +10,7 @@
 
 // #define VIDEO_ENABLE_UNCHAINED
 #define VIDEO_ENABLE_CLEAR
+// #define VIDEO_ENABLE_VSYNC
 
 #define VIDEO_WIDTH 320
 #define VIDEO_HEIGHT 200
@@ -55,11 +56,6 @@ extern uint8_t video_buffer[VIDEO_BUFFER_SIZE];
 bool video_start();
 void video_stop();
 bool video_set(uint32_t mode);
-void video_copy();
-void video_sync();
-void video_update();
-
-void video_clear();
 void video_render();
 
 void video_unchained_enable();

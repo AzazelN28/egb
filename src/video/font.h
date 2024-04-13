@@ -23,11 +23,11 @@ typedef struct font_ {
   font_glyph_t glyphs[256];
 } font_t;
 
-extern uint16_t font_id;
+extern int16_t font_id;
 extern font_t fonts[MAX_FONTS];
 extern uint8_t font[MAX_FONT_GLYPHS][FONT_DEFAULT_SIZE];
-extern uint8_t font_buffer[FONT_BUFFER_SIZE];
+extern char font_buffer[FONT_BUFFER_SIZE];
 
-uint16_t font_load(const char* filename);
-void font_unload(uint16_t id);
+int16_t font_load(const char* filename);
+void font_unload(int16_t id);
 void font_draw(uint16_t x, uint16_t y, uint8_t color, const char* format, ...);

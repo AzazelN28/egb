@@ -47,26 +47,13 @@ void video_stop() {
   video_set_mode(VIDEO_MODE_TEXT);
 }
 
-void video_copy() {
-  memcpy(video_ptr, video_buffer, VIDEO_BUFFER_SIZE);
-}
-
-void video_sync() {
-  while (inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE);
-  while (!(inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE));
-}
-
-void video_update() {
-  while (inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE);
-  while (!(inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE));
-  memcpy(video_ptr, video_buffer, VIDEO_BUFFER_SIZE);
-}
-
 void video_render()
 {
+#ifdef VIDEO_ENABLE_VSYNC
+  // v-sync
   while (inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE);
   while (!(inportb(VIDEO_INPUT_STATUS) & VIDEO_VERTICAL_RETRACE));
-
+#endif
 #ifdef VIDEO_ENABLE_UNCHAINED
   outportb(VGA_SC_INDEX, VGA_MAP_MASK);
   for (uint8_t plane = 0; plane < 4; plane++)
@@ -103,6 +90,8 @@ void video_render()
 #ifdef VIDEO_ENABLE_CLEAR
   // ESTO SE ZAMPA UNA CANTIDAD DE TIEMPO ABSURDA.
   memset(video_buffer, 0, VIDEO_BUFFER_SIZE);
+#else
+  memset(video_buffer, 0, 40 * 320);
 #endif
 }
 
@@ -145,11 +134,6 @@ void video_unchained_set_plane_mask(uint8_t plane)
 
 void video_put_pixel(uint16_t x, uint16_t y, uint8_t color) {
   video_buffer[y * VIDEO_WIDTH + x] = color;
-}
-
-void video_put_pixel_safe(uint16_t x, uint16_t y, uint8_t color) {
-  if (x >= 0 && x < VIDEO_WIDTH && y >= 0 && y < VIDEO_HEIGHT)
-    VIDEO_PUT_PIXEL(x, y, color);
 }
 
 uint8_t video_get_pixel(uint16_t x, uint16_t y) {
