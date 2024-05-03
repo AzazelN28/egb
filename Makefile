@@ -6,12 +6,13 @@ DATE=$(shell date +'%Y.%m.%d.%H%M%S')
 all:
 	mkdir -p dist
 	gcc -o dist/game.exe \
+		-DGAME_NAME=\"EGB\" \
+		-DGAME_VERSION=\"${DATE}\" \
 		-Wall \
 		-Wextra \
 		-Wshadow \
 		-Winit-self \
 		-pedantic \
-		-DGAME_VERSION=\"${DATE}\" \
 		-mcpu=i486 \
 		-fomit-frame-pointer \
 		-funroll-loops \
@@ -41,7 +42,13 @@ all:
 asm:
 	mkdir -p dist
 	gcc -S \
+		-DGAME_NAME=\"EGB\" \
 		-DGAME_VERSION=\"${DATE}\" \
+		-Wall \
+		-Wextra \
+		-Wshadow \
+		-Winit-self \
+		-pedantic \
 		-mcpu=i486 \
 		-fomit-frame-pointer \
 		-funroll-loops \

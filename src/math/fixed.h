@@ -9,6 +9,8 @@
 #define FIXED_UNIT (1 << FIXED_BITS)
 #define FIXED_MASK (FIXED_UNIT - 1)
 
+#define FIXED_HALF_UNIT 0x7fff
+
 #define FIXED_FROM(i, d) ((i << FIXED_BITS) | (d & FIXED_MASK))
 #define FIXED_FROM_INT(i) (i << FIXED_BITS)
 #define FIXED_TO_INT(f) (f >> FIXED_BITS)
@@ -21,6 +23,7 @@
 // #define FIXED_DIV(a, b) ((FIXED_ABS(a) >> 14 >= FIXED_ABS(b)) ? (a < 0 ? MININT : MAXINT) : FIXED_DIV2((a), (b)))
 #define FIXED_DIV(a, b) (fixed_t)(((int64_t)a << FIXED_BITS) / b)
 #define FIXED_MUL(a, b) (fixed_t)(((int64_t)a * b) >> FIXED_BITS)
+#define FIXED_FRACT(a) (a & FIXED_MASK)
 
 #define FIXED_COS(a) fixed_sin_table[(a + FIXANG_90) & FIXANG_MASK]
 #define FIXED_SIN(a) fixed_sin_table[a]

@@ -6,7 +6,8 @@
 #include "../video/video.h"
 #include "../math/fixed.h"
 #include "../math/vec2.h"
-#include "../game/map.h"
+#include "map.h"
+#include "entity.h"
 
 #define RAYCASTER_TEXTURE_SIZE 64
 #define RAYCASTER_TEXTURE_HALF_SIZE 32
@@ -60,7 +61,6 @@ typedef struct rows_
   vec2fix_t end; // end
   vec2fix_t delta; // delta
   vec2fix_t step;
-  vec2fix_t mult_step;
 } rows_t;
 
 typedef struct ray_

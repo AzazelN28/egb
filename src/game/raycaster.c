@@ -1,5 +1,11 @@
 #include "raycaster.h"
 
+struct whatever_ {
+  fixed_t x, y;
+  fixed_t step_x, step_y;
+  bool needs_update;
+} whatever[VIDEO_HALF_HEIGHT] = {0};
+
 column_t columns[VIDEO_WIDTH] = {0};
 view_t view = {0};
 ray_t ray = {0};
@@ -54,6 +60,7 @@ void raycaster_render()
   if (view.changed_rotation) {
     rows.start.x = view.direction.x - view.plane.x;
     rows.start.y = view.direction.y - view.plane.y;
+
     rows.end.x = view.direction.x + view.plane.x;
     rows.end.y = view.direction.y + view.plane.y;
 
@@ -64,11 +71,20 @@ void raycaster_render()
     rows.step.y = FIXED_DIV(rows.delta.y, RAYCASTER_VIDEO_FIXED_WIDTH);
   }
 
+  if (view.changed_rotation || view.changed_position)
+  {
+    for (uint8_t y = 0; y < VIDEO_HALF_HEIGHT; y++)
+    {
+      whatever[y].x = view.position.x + FIXED_MUL(rows.start.x, row_distances[y]);
+      whatever[y].y = view.position.y + FIXED_MUL(rows.start.y, row_distances[y]);
+
+      whatever[y].step_x = FIXED_MUL(row_distances[y], rows.step.x);
+      whatever[y].step_y = FIXED_MUL(row_distances[y], rows.step.y);
+    }
+  }
+
   for (int16_t x = VIDEO_WIDTH - 1; x >= 0; --x)
   {
-    rows.mult_step.x = rows.step.x * x;
-    rows.mult_step.y = rows.step.y * x;
-
     ray.x = xs[x];
 
     ray.direction.x = view.direction.x + FIXED_MUL(view.plane.x, ray.x);
@@ -126,6 +142,42 @@ void raycaster_render()
       ray.tilei.x = FIXED_TO_INT(ray.tile.x);
       ray.tilei.y = FIXED_TO_INT(ray.tile.y);
 
+      // Comprobamos si en este tile existen entidades.
+      if (adjacent_entities[ray.tilei.x][ray.tilei.y] != NULL)
+      {
+        // TODO: Aquí marcamos la casilla como que ha sido
+        // visitada, y ya no tenemos que volver a comprobar
+        // si hay entidades en ella.
+        entity_t *current = adjacent_entities[ray.tilei.x][ray.tilei.y];
+        while (current != NULL) {
+          fixed_t delta_x = current->position.x - view.position.x;
+          fixed_t delta_y = current->position.y - view.position.y;
+
+          if (ray.side == 0)
+          {
+            // TODO: Aquí podemos utilizar ray.side_dist para calcular
+            //       la distancia a la que se encuentra la entidad.
+          }
+          else
+          {
+            // TODO: Aquí podemos utilizar ray.side_dist para calcular
+            //       la distancia a la que se encuentra la entidad.
+            // delta_y += FIXED_MUL(FIXED_UNIT, ray.tile_delta.y);
+          }
+          // TODO: Cambiar la forma en la que calculamos la profundidad.
+
+          fixed_t val = FIXED_MUL(view.direction.x, delta_y) - FIXED_MUL(view.direction.y, delta_x);
+          current->x = RAYCASTER_VIDEO_FIXED_HALF_WIDTH + VIDEO_HALF_WIDTH * val;
+          // current->x = RAYCASTER_VIDEO_FIXED_HALF_WIDTH; // FIXED_MUL(delta_x, ray.direction.x);
+          current->y = RAYCASTER_VIDEO_FIXED_HALF_HEIGHT;
+          current->z = FIXED_MUL(delta_x, delta_x) + FIXED_MUL(delta_y, delta_y);
+          // TODO: Añadir las coordenadas en las que se debe renderizar
+          //       la entidad.
+          entity_add_visible(current);
+          current = current->next_adjacent;
+        }
+      }
+
       if (ray.tilei.x < 0 || ray.tilei.y < 0 || ray.tilei.x >= MAP_WIDTH || ray.tilei.y >= MAP_HEIGHT)
       {
         ray.side = 2; // OUTSIDE.
@@ -142,7 +194,7 @@ void raycaster_render()
       ray.perp_wall_dist = (ray.side_dist.x - ray.delta_dist.x);
       ray.wall_x = view.position.y + FIXED_MUL(ray.perp_wall_dist, ray.direction.y);
       ray.wall_x -= FIXED_FLOOR(ray.wall_x);
-      columns[x].tex_x = FIXED_MUL(ray.wall_x, RAYCASTER_TEXTURE_FIXED_SIZE);
+      columns[x].tex_x = ray.wall_x * RAYCASTER_TEXTURE_SIZE;
       if (ray.direction.x < 0)
       {
         columns[x].tex_x = RAYCASTER_TEXTURE_FIXED_SIZE - columns[x].tex_x - FIXED_UNIT;
@@ -153,7 +205,7 @@ void raycaster_render()
       ray.perp_wall_dist = (ray.side_dist.y - ray.delta_dist.y);
       ray.wall_x = view.position.x + FIXED_MUL(ray.perp_wall_dist, ray.direction.x);
       ray.wall_x -= FIXED_FLOOR(ray.wall_x);
-      columns[x].tex_x = FIXED_MUL(ray.wall_x, RAYCASTER_TEXTURE_FIXED_SIZE);
+      columns[x].tex_x = ray.wall_x * RAYCASTER_TEXTURE_SIZE;
       if (ray.direction.y < 0)
       {
         columns[x].tex_x = RAYCASTER_TEXTURE_FIXED_SIZE - columns[x].tex_x - FIXED_UNIT;
@@ -171,7 +223,7 @@ void raycaster_render()
     columns[x].fix_height = FIXED_DIV(RAYCASTER_VIDEO_FIXED_HEIGHT, columns[x].z);
     columns[x].height = FIXED_TO_INT(columns[x].fix_height);
     columns[x].half_height = columns[x].height >> 1;
-    columns[x].inc_y = FIXED_DIV(RAYCASTER_TEXTURE_FIXED_SIZE, columns[x].fix_height);
+    columns[x].inc_y = RAYCASTER_TEXTURE_FIXED_SIZE / columns[x].height;
     columns[x].tex_y = 0;
 
     columns[x].draw_start = columns[x].draw_end = VIDEO_HALF_HEIGHT;
@@ -196,14 +248,14 @@ void raycaster_render()
         if (row_distances[y] > RAYCASTER_MAX_DRAWING_Z)
           continue;
 
-        fixed_t floor_step_x = FIXED_MUL(row_distances[y], rows.mult_step.x);
-        fixed_t floor_step_y = FIXED_MUL(row_distances[y], rows.mult_step.y);
+        fixed_t floor_step_x = whatever[y].step_x * x;
+        fixed_t floor_step_y = whatever[y].step_y * x;
 
-        fixed_t floor_x = view.position.x + floor_step_x + FIXED_MUL(row_distances[y], rows.start.x);
-        fixed_t floor_y = view.position.y + floor_step_y + FIXED_MUL(row_distances[y], rows.start.y);
+        fixed_t floor_x = floor_step_x + whatever[y].x;
+        fixed_t floor_y = floor_step_y + whatever[y].y;
 
-        uint8_t u = FIXED_TO_INT(RAYCASTER_TEXTURE_SIZE * (floor_x - FIXED_FLOOR(floor_x))) & (RAYCASTER_TEXTURE_SIZE - 1);
-        uint8_t v = FIXED_TO_INT(RAYCASTER_TEXTURE_SIZE * (floor_y - FIXED_FLOOR(floor_y))) & (RAYCASTER_TEXTURE_SIZE - 1);
+        uint8_t u = FIXED_TO_INT(RAYCASTER_TEXTURE_SIZE * FIXED_FRACT(floor_x)) & (RAYCASTER_TEXTURE_SIZE - 1);
+        uint8_t v = FIXED_TO_INT(RAYCASTER_TEXTURE_SIZE * FIXED_FRACT(floor_y)) & (RAYCASTER_TEXTURE_SIZE - 1);
 
         // TECHO
         uint8_t color = checker_texture[RAYCASTER_TEXTURE_SIZE * v + u];
@@ -227,13 +279,34 @@ void raycaster_render()
       columns[x].v = FIXED_TO_INT(columns[x].tex_y);
       columns[x].tex_y += columns[x].inc_y;
       uint8_t color = checker_texture[RAYCASTER_TEXTURE_SIZE * columns[x].v + columns[x].u];
-
       VIDEO_PUT_PIXEL(x, y, color);
 
       columns[x].v = FIXED_TO_INT(RAYCASTER_TEXTURE_FIXED_SIZE - columns[x].tex_y);
       color = checker_texture[RAYCASTER_TEXTURE_SIZE * columns[x].v + columns[x].u];
       VIDEO_PUT_PIXEL(x, (VIDEO_HEIGHT - y - 1), color);
     }
+  }
+
+  // Renderizamos las entidades visibles.
+  entity_t *current = visible_entities;
+  while (current != NULL)
+  {
+    for (uint8_t y = 0; y < RAYCASTER_TEXTURE_SIZE; y++) {
+      for (uint8_t x = 0; x < RAYCASTER_TEXTURE_SIZE; x++) {
+        uint8_t color = checker_texture[RAYCASTER_TEXTURE_SIZE * y + x];
+        if (color != 0) {
+          int16_t sx = FIXED_TO_INT(current->x) + x - RAYCASTER_TEXTURE_HALF_SIZE;
+          int16_t sy = FIXED_TO_INT(current->y) + y - RAYCASTER_TEXTURE_HALF_SIZE;
+          if (sx >= 0 && sx < VIDEO_WIDTH
+           && sy >= RAYCASTER_MIN_Y && sy < RAYCASTER_MAX_Y) {
+            VIDEO_PUT_PIXEL(sx, sy, color);
+          }
+        }
+      }
+    }
+
+    num_visible_entities++;
+    current = current->next_visible;
   }
 
   view.changed_position = false;

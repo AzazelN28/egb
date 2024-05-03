@@ -17,7 +17,7 @@ bool game_init()
 {
   clrscr();
   _setcursortype(_NOCURSOR);
-  log_header("EGB %s", GAME_VERSION);
+  log_header("%s %s", GAME_NAME, GAME_VERSION);
 
   sleep(1);
 
@@ -89,6 +89,8 @@ void game_input() {
  * Actualizamos la lógica del juego.
  */
 void game_update() {
+  entity_clear_adjacent();
+
   if (KEY_IS_PRESSED(KEY_W) || KEY_IS_PRESSED(KEY_UP))
   {
     view.changed_position = true;
@@ -138,16 +140,21 @@ void game_update() {
   }
 
   if (view.changed_position) {
-    entity_move(&player);
+    entity_update(&player);
+    entity_add_adjacent(&player);
 
     view.position.x = player.position.x;
     view.position.y = player.position.y;
   }
+
+
+  entity_update(&other);
+  entity_add_adjacent(&other);
 }
 
 void debug_render() {
   // Imprimimos el número de tics y las coordenadas del ratón.
-  font_draw(0, 0, 0xF, "FPS: %d TIME: %d DURATION: %d START: %d", frame_rate, frame_tics, fade_duration_in_tics, fade_timer.start);
+  font_draw(0, 0, 0xF, "FPS: %d TIME: %d DURATION: %d START: %d VISIBLE: %d", frame_rate, frame_tics, fade_duration_in_tics, fade_timer.start, num_visible_entities);
 #if 0
   if (mouse.current.y > columns[mouse.current.x].draw_start
    && mouse.current.y < columns[mouse.current.x].draw_end)
@@ -199,6 +206,7 @@ void debug_render() {
 void game_render() {
   video_render();
   fade_update();
+  entity_clear_visible();
   raycaster_render();
   map_render();
   debug_render();
