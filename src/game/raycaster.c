@@ -154,24 +154,39 @@ void raycaster_render()
           fixed_t delta_x = current->position.x - view.position.x;
           fixed_t delta_y = current->position.y - view.position.y;
 
-          if (ray.side == 0)
-          {
-            // TODO: Aquí podemos utilizar ray.side_dist para calcular
-            //       la distancia a la que se encuentra la entidad.
-          }
-          else
-          {
-            // TODO: Aquí podemos utilizar ray.side_dist para calcular
-            //       la distancia a la que se encuentra la entidad.
-            // delta_y += FIXED_MUL(FIXED_UNIT, ray.tile_delta.y);
-          }
-          // TODO: Cambiar la forma en la que calculamos la profundidad.
-
           current->transform_x = FIXED_MUL(view.inv_det, (FIXED_MUL(view.direction.y, delta_x) - FIXED_MUL(view.direction.x, delta_y)));
           current->transform_y = FIXED_MUL(view.inv_det, (-FIXED_MUL(view.plane.y, delta_x) + FIXED_MUL(view.plane.x, delta_y)));
           current->x = VIDEO_HALF_WIDTH * (FIXED_UNIT + FIXED_DIV(current->transform_x, current->transform_y));
           current->y = RAYCASTER_VIDEO_FIXED_HALF_HEIGHT;
           current->z = FIXED_MUL(delta_x, delta_x) + FIXED_MUL(delta_y, delta_y);
+
+          fixed_t screen_size = abs(FIXED_DIV(RAYCASTER_VIDEO_FIXED_HEIGHT, current->transform_y));
+          current->inc = FIXED_DIV(RAYCASTER_TEXTURE_FIXED_SIZE, screen_size);
+          current->screen_size = FIXED_TO_INT(screen_size);
+          current->screen_half_size = (current->screen_size >> 1);
+
+          current->screen_start.y = -current->screen_half_size + VIDEO_HALF_HEIGHT;
+          if (current->screen_start.y < RAYCASTER_MIN_Y) {
+            current->texture_start.y = FIXED_MUL(current->inc, FIXED_FROM_INT(RAYCASTER_MIN_Y - current->screen_start.y));
+            current->screen_start.y = RAYCASTER_MIN_Y;
+          }
+
+          current->screen_end.y = current->screen_half_size + VIDEO_HALF_HEIGHT;
+          if (current->screen_end.y > RAYCASTER_MAX_Y) {
+            current->screen_end.y = RAYCASTER_MAX_Y;
+          }
+
+          int16_t x = FIXED_TO_INT(current->x);
+          current->screen_start.x = -current->screen_half_size + x;
+          if (current->screen_start.x < 0){
+            current->texture_start.x = FIXED_MUL(current->inc, FIXED_FROM_INT(0 - current->screen_start.x));
+            current->screen_start.x = 0;
+          }
+
+          current->screen_end.x = current->screen_half_size + x;
+          if (current->screen_end.x > VIDEO_WIDTH) {
+            current->screen_end.x = VIDEO_WIDTH;
+          }
           // TODO: Añadir las coordenadas en las que se debe renderizar
           //       la entidad.
           entity_add_visible(current);
@@ -219,7 +234,9 @@ void raycaster_render()
     columns[x].side = ray.side;
     columns[x].z = ray.perp_wall_dist;
     if (columns[x].z == 0)
-      columns[x].z = 1;
+    {
+      columns[x].z = FIXED_UNIT;
+    }
 
     columns[x].fix_height = FIXED_DIV(RAYCASTER_VIDEO_FIXED_HEIGHT, columns[x].z);
     columns[x].height = FIXED_TO_INT(columns[x].fix_height);
@@ -292,6 +309,43 @@ void raycaster_render()
   entity_t *current = visible_entities;
   while (current != NULL)
   {
+    if (current->transform_y >= RAYCASTER_MAX_DRAWING_Z)
+    {
+      current = current->next_visible;
+      continue;
+    }
+
+    // TODO: Tenemos que rehacer esto para que se pinten en pantalla
+    //       correctamente.
+    fixed_t u = current->texture_start.x;
+    fixed_t v = current->texture_start.y;
+    for (int16_t y = current->screen_start.y; y < current->screen_end.y; y++)
+    {
+      for (int16_t x = current->screen_start.x; x < current->screen_end.x; x++)
+      {
+        if (current->transform_y > columns[x].z)
+        {
+          u += current->inc;
+          continue;
+        }
+
+        int16_t tu = FIXED_TO_INT(u) & (RAYCASTER_TEXTURE_SIZE - 1);
+        int16_t tv = FIXED_TO_INT(v) & (RAYCASTER_TEXTURE_SIZE - 1);
+
+        uint8_t color = checker_texture[RAYCASTER_TEXTURE_SIZE * tv + tu];
+        if (color == TRANSPARENT_COLOR)
+        {
+          u += current->inc;
+          continue;
+        }
+
+        VIDEO_PUT_PIXEL(x, y, color);
+        u += current->inc;
+      }
+      v += current->inc;
+    }
+
+    /*
     for (uint8_t y = 0; y < RAYCASTER_TEXTURE_SIZE; y++) {
       for (uint8_t x = 0; x < RAYCASTER_TEXTURE_SIZE; x++) {
         uint8_t color = checker_texture[RAYCASTER_TEXTURE_SIZE * y + x];
@@ -310,6 +364,7 @@ void raycaster_render()
         }
       }
     }
+    */
 
     num_visible_entities++;
     current = current->next_visible;

@@ -28,6 +28,8 @@
 #define RAYCASTER_NEG_ONE 0xFFFF0000
 #define RAYCASTER_POS_ONE 0x00010000
 
+#define TRANSPARENT_COLOR 0
+
 typedef struct view_
 {
   bool floor_ceil_hidden;

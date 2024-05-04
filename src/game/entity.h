@@ -25,11 +25,18 @@ typedef struct entity_
 
   // necesario para pintarlos en orden y saber si son visibles,
   // además de para usar el z-buffer.
-  fixed_t z; //
   fixed_t x;
   fixed_t y;
+  fixed_t z;
   fixed_t transform_x;
   fixed_t transform_y;
+
+  vec2int16_t screen_start;
+  vec2int16_t screen_end;
+  int16_t screen_size;
+  int16_t screen_half_size;
+  vec2fix_t texture_start;
+  fixed_t inc;
 
   // siguiente visible.
   struct entity_ *next_visible;
