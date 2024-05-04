@@ -165,6 +165,7 @@ void raycaster_render()
           current->screen_size = FIXED_TO_INT(screen_size);
           current->screen_half_size = (current->screen_size >> 1);
 
+          current->texture_start.y = 0;
           current->screen_start.y = -current->screen_half_size + VIDEO_HALF_HEIGHT;
           if (current->screen_start.y < RAYCASTER_MIN_Y) {
             current->texture_start.y = FIXED_MUL(current->inc, FIXED_FROM_INT(RAYCASTER_MIN_Y - current->screen_start.y));
@@ -177,8 +178,9 @@ void raycaster_render()
           }
 
           int16_t x = FIXED_TO_INT(current->x);
+          current->texture_start.x = 0;
           current->screen_start.x = -current->screen_half_size + x;
-          if (current->screen_start.x < 0){
+          if (current->screen_start.x < 0) {
             current->texture_start.x = FIXED_MUL(current->inc, FIXED_FROM_INT(0 - current->screen_start.x));
             current->screen_start.x = 0;
           }
@@ -343,6 +345,7 @@ void raycaster_render()
         u += current->inc;
       }
       v += current->inc;
+      u = current->texture_start.x;
     }
 
     /*

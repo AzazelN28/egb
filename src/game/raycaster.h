@@ -28,7 +28,7 @@
 #define RAYCASTER_NEG_ONE 0xFFFF0000
 #define RAYCASTER_POS_ONE 0x00010000
 
-#define TRANSPARENT_COLOR 0
+#define TRANSPARENT_COLOR 0x03
 
 typedef struct view_
 {
