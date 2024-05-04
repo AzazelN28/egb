@@ -14,7 +14,14 @@ rows_t rows = {0};
 fixed_t xs[VIDEO_WIDTH] = {0};
 fixed_t row_distances[VIDEO_HALF_HEIGHT] = {0};
 uint8_t checker_texture[RAYCASTER_TEXTURE_BUFFER_SIZE] = {0};
+bool visited_map[MAP_WIDTH][MAP_HEIGHT] = {false};
 
+/**
+ * @brief Inicializa el motor de raycasting.
+ *
+ * Precalcula las distancias de las filas y los valores de x para
+ * cada columna y cada fila.
+ */
 void raycaster_start()
 {
   view.changed_position = true;
@@ -55,6 +62,9 @@ void raycaster_start()
   }
 }
 
+/**
+ * @brief Renderiza el mundo.
+ */
 void raycaster_render()
 {
   if (view.changed_rotation) {
@@ -83,6 +93,9 @@ void raycaster_render()
       whatever[y].step_y = FIXED_MUL(row_distances[y], rows.step.y);
     }
   }
+
+  // Limpiamos el mapa de visitados.
+  memset(visited_map, 0, sizeof(visited_map));
 
   for (int16_t x = VIDEO_WIDTH - 1; x >= 0; --x)
   {
@@ -144,11 +157,15 @@ void raycaster_render()
       ray.tilei.y = FIXED_TO_INT(ray.tile.y);
 
       // Comprobamos si en este tile existen entidades.
-      if (adjacent_entities[ray.tilei.x][ray.tilei.y] != NULL)
+      if (adjacent_entities[ray.tilei.x][ray.tilei.y] != NULL
+       && visited_map[ray.tilei.x][ray.tilei.y] == false)
       {
-        // TODO: Aquí marcamos la casilla como que ha sido
+        // Aquí marcamos la casilla como que ha sido
         // visitada, y ya no tenemos que volver a comprobar
         // si hay entidades en ella.
+        visited_map[ray.tilei.x][ray.tilei.y] = true;
+
+        // Recorremos todas las entidades que hay en esta casilla.
         entity_t *current = adjacent_entities[ray.tilei.x][ray.tilei.y];
         while (current != NULL) {
           fixed_t delta_x = current->position.x - view.position.x;
@@ -189,8 +206,6 @@ void raycaster_render()
           if (current->screen_end.x > VIDEO_WIDTH) {
             current->screen_end.x = VIDEO_WIDTH;
           }
-          // TODO: Añadir las coordenadas en las que se debe renderizar
-          //       la entidad.
           entity_add_visible(current);
           current = current->next_adjacent;
         }
@@ -250,7 +265,6 @@ void raycaster_render()
     columns[x].draw_start += -columns[x].half_height;
     if (columns[x].draw_start < RAYCASTER_MIN_Y)
     {
-      //columns[x].tex_y += FIXED_MUL(FIXED_FROM_INT((RAYCASTER_MIN_Y - columns[x].draw_start)), columns[x].inc_y);
       columns[x].tex_y += (RAYCASTER_MIN_Y - columns[x].draw_start) * columns[x].inc_y;
       columns[x].draw_start = RAYCASTER_MIN_Y;
     }
@@ -323,6 +337,8 @@ void raycaster_render()
     fixed_t v = current->texture_start.y;
     for (int16_t y = current->screen_start.y; y < current->screen_end.y; y++)
     {
+      int16_t tv = FIXED_TO_INT(v) & (RAYCASTER_TEXTURE_SIZE - 1);
+      uint32_t texture_offset = RAYCASTER_TEXTURE_SIZE * tv;
       for (int16_t x = current->screen_start.x; x < current->screen_end.x; x++)
       {
         if (current->transform_y > columns[x].z)
@@ -332,9 +348,8 @@ void raycaster_render()
         }
 
         int16_t tu = FIXED_TO_INT(u) & (RAYCASTER_TEXTURE_SIZE - 1);
-        int16_t tv = FIXED_TO_INT(v) & (RAYCASTER_TEXTURE_SIZE - 1);
 
-        uint8_t color = checker_texture[RAYCASTER_TEXTURE_SIZE * tv + tu];
+        uint8_t color = checker_texture[texture_offset + tu];
         if (color == TRANSPARENT_COLOR)
         {
           u += current->inc;
@@ -347,27 +362,6 @@ void raycaster_render()
       v += current->inc;
       u = current->texture_start.x;
     }
-
-    /*
-    for (uint8_t y = 0; y < RAYCASTER_TEXTURE_SIZE; y++) {
-      for (uint8_t x = 0; x < RAYCASTER_TEXTURE_SIZE; x++) {
-        uint8_t color = checker_texture[RAYCASTER_TEXTURE_SIZE * y + x];
-
-        if (color != 0) {
-          int16_t sx = FIXED_TO_INT(current->x) + x - RAYCASTER_TEXTURE_HALF_SIZE;
-          int16_t sy = FIXED_TO_INT(current->y) + y - RAYCASTER_TEXTURE_HALF_SIZE;
-          if (current->transform_y >= columns[sx].z) {
-            continue;
-          }
-
-          if (sx >= 0 && sx < VIDEO_WIDTH
-           && sy >= RAYCASTER_MIN_Y && sy < RAYCASTER_MAX_Y) {
-            VIDEO_PUT_PIXEL(sx, sy, color);
-          }
-        }
-      }
-    }
-    */
 
     num_visible_entities++;
     current = current->next_visible;

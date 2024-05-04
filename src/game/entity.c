@@ -25,6 +25,18 @@ entity_t other = {
     NULL,
     NULL};
 
+entity_t entities[MAX_ENTITIES] = {
+  {FIXED_HALF_UNIT,
+  {FIXED_FROM_INT(22), FIXED_FROM_INT(10)},
+  {FIXED_FROM_INT(22), FIXED_FROM_INT(10)},
+  {FIXED_NEG_ONE, 0},
+  0,
+  0,
+  {22, 10},
+  0,
+  NULL,
+  NULL},
+  0};
 entity_t *adjacent_entities[MAP_WIDTH][MAP_HEIGHT] = {NULL};
 entity_t *visible_entities = NULL;
 uint8_t num_visible_entities = 0;

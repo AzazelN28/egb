@@ -4,6 +4,8 @@
 #include "../math/vec2.h"
 #include "map.h"
 
+#define MAX_ENTITIES 128
+
 #define MAP_WIDTH 24
 #define MAP_HEIGHT 24
 
@@ -45,6 +47,7 @@ typedef struct entity_
 
 extern entity_t player;
 extern entity_t other;
+extern entity_t entities[MAX_ENTITIES];
 
 extern entity_t *adjacent_entities[MAP_WIDTH][MAP_HEIGHT];
 extern entity_t *visible_entities;
