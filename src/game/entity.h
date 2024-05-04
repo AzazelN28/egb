@@ -28,6 +28,8 @@ typedef struct entity_
   fixed_t z; //
   fixed_t x;
   fixed_t y;
+  fixed_t transform_x;
+  fixed_t transform_y;
 
   // siguiente visible.
   struct entity_ *next_visible;

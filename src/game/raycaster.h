@@ -36,6 +36,7 @@ typedef struct view_
   vec2fix_t position;
   vec2fix_t direction;
   vec2fix_t plane;
+  fixed_t inv_det;
 } view_t;
 
 typedef struct column_

@@ -73,6 +73,7 @@ void raycaster_render()
 
   if (view.changed_rotation || view.changed_position)
   {
+    view.inv_det = FIXED_DIV(FIXED_UNIT, (FIXED_MUL(view.plane.x, view.direction.y) - FIXED_MUL(view.direction.x, view.plane.y)));
     for (uint8_t y = 0; y < VIDEO_HALF_HEIGHT; y++)
     {
       whatever[y].x = view.position.x + FIXED_MUL(rows.start.x, row_distances[y]);
@@ -166,9 +167,9 @@ void raycaster_render()
           }
           // TODO: Cambiar la forma en la que calculamos la profundidad.
 
-          fixed_t val = FIXED_MUL(view.direction.x, delta_y) - FIXED_MUL(view.direction.y, delta_x);
-          current->x = RAYCASTER_VIDEO_FIXED_HALF_WIDTH + VIDEO_HALF_WIDTH * val;
-          // current->x = RAYCASTER_VIDEO_FIXED_HALF_WIDTH; // FIXED_MUL(delta_x, ray.direction.x);
+          current->transform_x = FIXED_MUL(view.inv_det, (FIXED_MUL(view.direction.y, delta_x) - FIXED_MUL(view.direction.x, delta_y)));
+          current->transform_y = FIXED_MUL(view.inv_det, (-FIXED_MUL(view.plane.y, delta_x) + FIXED_MUL(view.plane.x, delta_y)));
+          current->x = VIDEO_HALF_WIDTH * (FIXED_UNIT + FIXED_DIV(current->transform_x, current->transform_y));
           current->y = RAYCASTER_VIDEO_FIXED_HALF_HEIGHT;
           current->z = FIXED_MUL(delta_x, delta_x) + FIXED_MUL(delta_y, delta_y);
           // TODO: Añadir las coordenadas en las que se debe renderizar
@@ -218,7 +219,7 @@ void raycaster_render()
     columns[x].side = ray.side;
     columns[x].z = ray.perp_wall_dist;
     if (columns[x].z == 0)
-      columns[x].z = FIXED_UNIT;
+      columns[x].z = 1;
 
     columns[x].fix_height = FIXED_DIV(RAYCASTER_VIDEO_FIXED_HEIGHT, columns[x].z);
     columns[x].height = FIXED_TO_INT(columns[x].fix_height);
@@ -294,9 +295,14 @@ void raycaster_render()
     for (uint8_t y = 0; y < RAYCASTER_TEXTURE_SIZE; y++) {
       for (uint8_t x = 0; x < RAYCASTER_TEXTURE_SIZE; x++) {
         uint8_t color = checker_texture[RAYCASTER_TEXTURE_SIZE * y + x];
+
         if (color != 0) {
           int16_t sx = FIXED_TO_INT(current->x) + x - RAYCASTER_TEXTURE_HALF_SIZE;
           int16_t sy = FIXED_TO_INT(current->y) + y - RAYCASTER_TEXTURE_HALF_SIZE;
+          if (current->transform_y >= columns[sx].z) {
+            continue;
+          }
+
           if (sx >= 0 && sx < VIDEO_WIDTH
            && sy >= RAYCASTER_MIN_Y && sy < RAYCASTER_MAX_Y) {
             VIDEO_PUT_PIXEL(sx, sy, color);
