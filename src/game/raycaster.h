@@ -4,17 +4,12 @@
 #include <stdbool.h>
 
 #include "../video/video.h"
-#include "../video/colormap.h"
 #include "../math/fixed.h"
 #include "../math/vec2.h"
+#include "texture.h"
+#include "colormap.h"
 #include "map.h"
 #include "entity.h"
-
-#define RAYCASTER_TEXTURE_SIZE 64
-#define RAYCASTER_TEXTURE_HALF_SIZE 32
-#define RAYCASTER_TEXTURE_BUFFER_SIZE 4096
-#define RAYCASTER_TEXTURE_FIXED_SIZE 0x400000
-#define RAYCASTER_TEXTURE_FIXED_HALF_SIZE 0x200000
 
 #define RAYCASTER_VIDEO_FIXED_WIDTH 0x1400000
 #define RAYCASTER_VIDEO_FIXED_HEIGHT 0xC80000
@@ -28,8 +23,6 @@
 
 #define RAYCASTER_NEG_ONE 0xFFFF0000
 #define RAYCASTER_POS_ONE 0x00010000
-
-#define TRANSPARENT_COLOR 0x03
 
 typedef struct view_
 {
@@ -58,6 +51,7 @@ typedef struct column_
   int16_t draw_start;
   int16_t draw_end;
   uint8_t shade;
+  map_tile_t texture;
 } column_t;
 
 typedef struct rows_

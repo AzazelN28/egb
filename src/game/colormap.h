@@ -1,6 +1,6 @@
 #pragma once
 
-#include "palette.h"
+#include "../video/palette.h"
 #include <stdint.h>
 
 #define COLORMAP_SHADES 16

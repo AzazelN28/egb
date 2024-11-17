@@ -12,7 +12,7 @@
 #define MAP_SIGNATURE 0x4d415030
 #define MAP_MAX_NAME_SIZE 32
 
-typedef uint8_t map_size_t;
+typedef uint32_t map_size_t;
 typedef uint32_t map_tile_t;
 
 typedef struct map_header_
@@ -43,7 +43,6 @@ typedef struct map_ {
 } map_t;
 
 extern map_t map;
-// extern uint32_t map[MAP_WIDTH][MAP_HEIGHT];
 
 bool map_save_current(const char* filename);
 bool map_load_current(const char* filename);

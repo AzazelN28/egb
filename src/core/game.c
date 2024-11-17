@@ -57,11 +57,16 @@ bool game_init(game_options_t *options)
   log_answer("[OK]");
 
   log_line("Iniciando raycaster...");
+  texture_start();
+  textures_load("TEXTURES.BIN");
   raycaster_start();
   log_answer("[OK]");
   if (options->dump_defaults) {
     log_line("Guardando mapa...");
     map_save_current("_DEFAULT.MAP");
+    log_answer("[OK]");
+    log_line("Guardando textura...");
+    texture_save("_DEFAULT.TEX");
     log_answer("[OK]");
   }
   log_line("Cargando mapa...");

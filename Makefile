@@ -27,7 +27,6 @@ all:
 		src/core/log.c \
 		src/video/video.c \
 		src/video/palette.c \
-		src/video/colormap.c \
 		src/video/font.c \
 		src/video/fade.c \
 		src/input/keyboard.c \
@@ -37,6 +36,8 @@ all:
 		src/sound/opl2.c \
 		src/game/map.c \
 		src/game/entity.c \
+		src/game/colormap.c \
+		src/game/texture.c \
 		src/game/raycaster.c \
 		-lm
 
@@ -64,7 +65,6 @@ asm:
 		src/core/log.c \
 		src/video/video.c \
 		src/video/palette.c \
-		src/video/colormap.c \
 		src/video/font.c \
 		src/video/fade.c \
 		src/input/keyboard.c \
@@ -74,6 +74,8 @@ asm:
 		src/sound/opl2.c \
 		src/game/map.c \
 		src/game/entity.c \
+		src/game/colormap.c \
+		src/game/texture.c \
 		src/game/raycaster.c \
 		-lm
 

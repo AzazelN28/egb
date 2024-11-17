@@ -13,7 +13,6 @@ rows_t rows = {0};
 
 fixed_t xs[VIDEO_WIDTH] = {0};
 fixed_t row_distances[VIDEO_HALF_HEIGHT] = {0};
-uint8_t checker_texture[RAYCASTER_TEXTURE_BUFFER_SIZE] = {0};
 bool visited_map[MAP_WIDTH][MAP_HEIGHT] = {false};
 
 /**
@@ -26,27 +25,6 @@ void raycaster_start()
 {
   view.changed_position = true;
   view.changed_rotation = true;
-#ifdef RAYCASTER_XOR_TEXTURE
-  for (int y = 0; y < RAYCASTER_TEXTURE_SIZE; y++)
-  {
-    for (int x = 0; x < RAYCASTER_TEXTURE_SIZE; x++)
-    {
-      uint8_t c = x ^ y;
-      checker_texture[y * RAYCASTER_TEXTURE_SIZE + x] = c;
-    }
-  }
-#else
-  uint8_t fg = 0x03, bg = 0x05, num_cols = 4, num_rows = 4, col = 0, row = 0;
-  for (int y = 0; y < RAYCASTER_TEXTURE_SIZE; y++)
-  {
-    row = (y / (RAYCASTER_TEXTURE_SIZE / num_rows));
-    for (int x = 0; x < RAYCASTER_TEXTURE_SIZE; x++)
-    {
-      col = (x / (RAYCASTER_TEXTURE_SIZE / num_cols));
-      checker_texture[y * RAYCASTER_TEXTURE_SIZE + x] = (row + col) % 2 ? fg : bg;
-    }
-  }
-#endif
 
   // Precalculamos todas las distancias de las filas.
   for (int8_t y = 0; y < VIDEO_HALF_HEIGHT; y++)
@@ -178,7 +156,7 @@ void raycaster_render()
           current->z = FIXED_MUL(delta_x, delta_x) + FIXED_MUL(delta_y, delta_y);
 
           fixed_t screen_size = abs(FIXED_DIV(RAYCASTER_VIDEO_FIXED_HEIGHT, current->transform_y));
-          current->inc = FIXED_DIV(RAYCASTER_TEXTURE_FIXED_SIZE, screen_size);
+          current->inc = FIXED_DIV(TEXTURE_FIXED_SIZE, screen_size);
           current->screen_size = FIXED_TO_INT(screen_size);
           current->screen_half_size = (current->screen_size >> 1);
 
@@ -227,10 +205,10 @@ void raycaster_render()
       ray.perp_wall_dist = (ray.side_dist.x - ray.delta_dist.x);
       ray.wall_x = view.position.y + FIXED_MUL(ray.perp_wall_dist, ray.direction.y);
       ray.wall_x -= FIXED_FLOOR(ray.wall_x);
-      columns[x].tex_x = ray.wall_x * RAYCASTER_TEXTURE_SIZE;
+      columns[x].tex_x = ray.wall_x * TEXTURE_SIZE;
       if (ray.direction.x < 0)
       {
-        columns[x].tex_x = RAYCASTER_TEXTURE_FIXED_SIZE - columns[x].tex_x - FIXED_UNIT;
+        columns[x].tex_x = TEXTURE_FIXED_SIZE - columns[x].tex_x - FIXED_UNIT;
       }
     }
     else
@@ -238,10 +216,10 @@ void raycaster_render()
       ray.perp_wall_dist = (ray.side_dist.y - ray.delta_dist.y);
       ray.wall_x = view.position.x + FIXED_MUL(ray.perp_wall_dist, ray.direction.x);
       ray.wall_x -= FIXED_FLOOR(ray.wall_x);
-      columns[x].tex_x = ray.wall_x * RAYCASTER_TEXTURE_SIZE;
+      columns[x].tex_x = ray.wall_x * TEXTURE_SIZE;
       if (ray.direction.y < 0)
       {
-        columns[x].tex_x = RAYCASTER_TEXTURE_FIXED_SIZE - columns[x].tex_x - FIXED_UNIT;
+        columns[x].tex_x = TEXTURE_FIXED_SIZE - columns[x].tex_x - FIXED_UNIT;
       }
     }
 
@@ -257,8 +235,9 @@ void raycaster_render()
     columns[x].fix_height = FIXED_DIV(RAYCASTER_VIDEO_FIXED_HEIGHT, columns[x].z);
     columns[x].height = FIXED_TO_INT(columns[x].fix_height);
     columns[x].half_height = columns[x].height >> 1;
-    columns[x].inc_y = RAYCASTER_TEXTURE_FIXED_SIZE / columns[x].height;
+    columns[x].inc_y = TEXTURE_FIXED_SIZE / columns[x].height;
     columns[x].tex_y = 0;
+    columns[x].texture = map.tiles.data[ray.tilei.x][ray.tilei.y];
 
     columns[x].shade = FIXED_TO_INT(columns[x].z << COLORMAP_SHADE_MULTIPLIER) & COLORMAP_SHADE_MASK;
 
@@ -289,12 +268,12 @@ void raycaster_render()
         fixed_t floor_x = floor_step_x + whatever[y].x;
         fixed_t floor_y = floor_step_y + whatever[y].y;
 
-        uint8_t u = FIXED_TO_INT(RAYCASTER_TEXTURE_SIZE * FIXED_FRACT(floor_x)) & (RAYCASTER_TEXTURE_SIZE - 1);
-        uint8_t v = FIXED_TO_INT(RAYCASTER_TEXTURE_SIZE * FIXED_FRACT(floor_y)) & (RAYCASTER_TEXTURE_SIZE - 1);
+        uint8_t u = FIXED_TO_INT(TEXTURE_SIZE * FIXED_FRACT(floor_x)) & (TEXTURE_SIZE - 1);
+        uint8_t v = FIXED_TO_INT(TEXTURE_SIZE * FIXED_FRACT(floor_y)) & (TEXTURE_SIZE - 1);
 
         // TECHO
         uint8_t shade = FIXED_TO_INT(row_distances[y] << COLORMAP_SHADE_MULTIPLIER) & COLORMAP_SHADE_MASK;
-        uint8_t color = checker_texture[RAYCASTER_TEXTURE_SIZE * v + u];
+        uint8_t color = checker_texture[TEXTURE_SIZE * v + u];
         VIDEO_PUT_PIXEL(x, y, colormap[shade][color]);
 
         // SUELO
@@ -309,16 +288,18 @@ void raycaster_render()
     // PAREDES
     // TODO: Utilizar el truco de Carmack en DOOM de que las texturas están
     //       volteadas 90º. Así podremos hacer algo del estilo de
-    //       checker_texture[RAYCASTER_TEXTURE_SIZE * columns[x].u + columns[x].v]
+    //       checker_texture[TEXTURE_SIZE * columns[x].u + columns[x].v]
     for (uint8_t y = columns[x].draw_start; y < VIDEO_HALF_HEIGHT; y++)
     {
       columns[x].v = FIXED_TO_INT(columns[x].tex_y);
       columns[x].tex_y += columns[x].inc_y;
-      uint8_t color = checker_texture[RAYCASTER_TEXTURE_SIZE * columns[x].v + columns[x].u];
+      uint32_t texture = columns[x].texture;
+
+      uint8_t color = textures[texture][TEXTURE_SIZE * columns[x].v + columns[x].u];
       VIDEO_PUT_PIXEL(x, y, colormap[columns[x].shade][color]);
 
-      columns[x].v = FIXED_TO_INT(RAYCASTER_TEXTURE_FIXED_SIZE - columns[x].tex_y);
-      color = checker_texture[RAYCASTER_TEXTURE_SIZE * columns[x].v + columns[x].u];
+      columns[x].v = FIXED_TO_INT(TEXTURE_FIXED_SIZE - columns[x].tex_y);
+      color = textures[texture][TEXTURE_SIZE * columns[x].v + columns[x].u];
 
       VIDEO_PUT_PIXEL(x, (VIDEO_HEIGHT - y - 1), colormap[columns[x].shade][color]);
     }
@@ -341,8 +322,8 @@ void raycaster_render()
     fixed_t v = current->texture_start.y;
     for (int16_t y = current->screen_start.y; y < current->screen_end.y; y++)
     {
-      int16_t tv = FIXED_TO_INT(v) & (RAYCASTER_TEXTURE_SIZE - 1);
-      uint32_t texture_offset = RAYCASTER_TEXTURE_SIZE * tv;
+      int16_t tv = FIXED_TO_INT(v) & (TEXTURE_SIZE - 1);
+      uint32_t texture_offset = TEXTURE_SIZE * tv;
       for (int16_t x = current->screen_start.x; x < current->screen_end.x; x++)
       {
         if (current->transform_y > columns[x].z)
@@ -351,7 +332,7 @@ void raycaster_render()
           continue;
         }
 
-        int16_t tu = FIXED_TO_INT(u) & (RAYCASTER_TEXTURE_SIZE - 1);
+        int16_t tu = FIXED_TO_INT(u) & (TEXTURE_SIZE - 1);
 
         uint8_t shade = FIXED_TO_INT(current->transform_y << COLORMAP_SHADE_MULTIPLIER) & COLORMAP_SHADE_MASK;
         uint8_t color = checker_texture[texture_offset + tu];
