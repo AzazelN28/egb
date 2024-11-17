@@ -15,6 +15,8 @@
 #define COLLISION_XY 0x03
 #define COLLISION_ENTITY  0x10
 
+#define ENTITY_RADIUS 0x3fff
+
 typedef struct entity_
 {
   fixed_t radius;

@@ -36,26 +36,33 @@ entity_t entities[MAX_ENTITIES] = {
   0,
   NULL,
   NULL},
-  0};
+  NULL
+};
 entity_t *adjacent_entities[MAP_WIDTH][MAP_HEIGHT] = {NULL};
 entity_t *visible_entities = NULL;
 uint8_t num_visible_entities = 0;
 
+/**
+ * Intenta mover una entidad.
+ */
 bool entity_try_move(entity_t *entity)
 {
   // 0x3fff == 0.25
   // 0x7fff == 0.5
   // 0xffff == 0.9999
-  int8_t minx = FIXED_TO_INT((entity->position.x - 0x3fff));
-  int8_t miny = FIXED_TO_INT((entity->position.y - 0x3fff));
-  int8_t maxx = FIXED_TO_INT((entity->position.x + 0x3fff));
-  int8_t maxy = FIXED_TO_INT((entity->position.y + 0x3fff));
+  int8_t minx = FIXED_TO_INT((entity->position.x - ENTITY_RADIUS));
+  int8_t miny = FIXED_TO_INT((entity->position.y - ENTITY_RADIUS));
+  int8_t maxx = FIXED_TO_INT((entity->position.x + ENTITY_RADIUS));
+  int8_t maxy = FIXED_TO_INT((entity->position.y + ENTITY_RADIUS));
+
+  if (minx < 0 || maxx >= MAP_WIDTH) return false;
+  if (miny < 0 || maxy >= MAP_HEIGHT) return false;
 
   for (int8_t y = miny; y <= maxy; y++)
   {
     for (int8_t x = minx; x <= maxx; x++)
     {
-      if (map[x][y] != 0)
+      if (map.tiles.data[x][y] != 0)
       {
         return false;
       }
@@ -64,6 +71,9 @@ bool entity_try_move(entity_t *entity)
   return true;
 }
 
+/**
+ * Se encarga del movimiento de entidades.
+ */
 void entity_move(entity_t *entity)
 {
   entity->collision = COLLISION_NONE;
@@ -100,6 +110,9 @@ void entity_move(entity_t *entity)
   entity->position.y = current_position.y;
 }
 
+/**
+ * Actualiza las entidades.
+ */
 void entity_update(entity_t *entity) {
   entity_move(entity);
 
@@ -107,6 +120,9 @@ void entity_update(entity_t *entity) {
   entity->tile.y = FIXED_TO_INT(entity->position.y);
 }
 
+/**
+ * Limpia la lista de entidades visibles.
+ */
 void entity_clear_visible()
 {
   entity_t *current = visible_entities;
@@ -120,6 +136,10 @@ void entity_clear_visible()
   num_visible_entities = 0;
 }
 
+/**
+ * Añade una entidad a la lista de entidades
+ * visibles.
+ */
 void entity_add_visible(entity_t *entity)
 {
   // Si la lista está vacía, añadimos la entidad
@@ -131,6 +151,9 @@ void entity_add_visible(entity_t *entity)
   }
 }
 
+/**
+ * Limpia la lista de entidades adyacentes.
+ */
 void entity_clear_adjacent()
 {
   for (uint8_t y = 0; y < MAP_HEIGHT; y++)
@@ -149,6 +172,10 @@ void entity_clear_adjacent()
   }
 }
 
+/**
+ * Añade una entidad a la lista de entidades
+ * adyacentes.
+ */
 void entity_add_adjacent(entity_t *entity)
 {
   entity_t *current = adjacent_entities[entity->tile.x][entity->tile.y];

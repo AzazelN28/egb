@@ -27,6 +27,7 @@ all:
 		src/core/log.c \
 		src/video/video.c \
 		src/video/palette.c \
+		src/video/colormap.c \
 		src/video/font.c \
 		src/video/fade.c \
 		src/input/keyboard.c \
@@ -63,6 +64,7 @@ asm:
 		src/core/log.c \
 		src/video/video.c \
 		src/video/palette.c \
+		src/video/colormap.c \
 		src/video/font.c \
 		src/video/fade.c \
 		src/input/keyboard.c \

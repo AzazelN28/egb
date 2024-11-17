@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "../video/video.h"
+#include "../video/colormap.h"
 #include "../math/fixed.h"
 #include "../math/vec2.h"
 #include "map.h"
@@ -22,7 +23,7 @@
 
 #define RAYCASTER_MIN_Y 40
 #define RAYCASTER_MAX_Y 160
-#define RAYCASTER_MAX_DRAWING_Z 0x80000
+#define RAYCASTER_MAX_DRAWING_Z 0x70000
 #define RAYCASTER_MAX_ITERATIONS 32
 
 #define RAYCASTER_NEG_ONE 0xFFFF0000
@@ -56,6 +57,7 @@ typedef struct column_
   int16_t half_height;
   int16_t draw_start;
   int16_t draw_end;
+  uint8_t shade;
 } column_t;
 
 typedef struct rows_

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #define PALETTE_BYTES 768
 #define PALETTE_SIZE  256
@@ -18,3 +19,5 @@ void palette_start();
 void palette_get_all(uint8_t *pal);
 void palette_set_all(uint8_t *pal);
 void palette_set(uint8_t color, uint8_t red, uint8_t green, uint8_t blue);
+bool palette_save(const char* filename);
+bool palette_load(const char* filename);

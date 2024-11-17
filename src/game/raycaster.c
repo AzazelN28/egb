@@ -216,7 +216,7 @@ void raycaster_render()
         ray.side = 2; // OUTSIDE.
         ray.hit = true;
       }
-      else if (map[ray.tilei.x][ray.tilei.y] > 0)
+      else if (map.tiles.data[ray.tilei.x][ray.tilei.y] > 0)
       {
         ray.hit = true;
       }
@@ -254,12 +254,13 @@ void raycaster_render()
     {
       columns[x].z = FIXED_UNIT;
     }
-
     columns[x].fix_height = FIXED_DIV(RAYCASTER_VIDEO_FIXED_HEIGHT, columns[x].z);
     columns[x].height = FIXED_TO_INT(columns[x].fix_height);
     columns[x].half_height = columns[x].height >> 1;
     columns[x].inc_y = RAYCASTER_TEXTURE_FIXED_SIZE / columns[x].height;
     columns[x].tex_y = 0;
+
+    columns[x].shade = FIXED_TO_INT(columns[x].z << COLORMAP_SHADE_MULTIPLIER) & COLORMAP_SHADE_MASK;
 
     columns[x].draw_start = columns[x].draw_end = VIDEO_HALF_HEIGHT;
     columns[x].draw_start += -columns[x].half_height;
@@ -292,12 +293,13 @@ void raycaster_render()
         uint8_t v = FIXED_TO_INT(RAYCASTER_TEXTURE_SIZE * FIXED_FRACT(floor_y)) & (RAYCASTER_TEXTURE_SIZE - 1);
 
         // TECHO
+        uint8_t shade = FIXED_TO_INT(row_distances[y] << COLORMAP_SHADE_MULTIPLIER) & COLORMAP_SHADE_MASK;
         uint8_t color = checker_texture[RAYCASTER_TEXTURE_SIZE * v + u];
-        VIDEO_PUT_PIXEL(x, y, color);
+        VIDEO_PUT_PIXEL(x, y, colormap[shade][color]);
 
         // SUELO
         if ((VIDEO_HEIGHT - y - 1) < RAYCASTER_MAX_Y)
-          VIDEO_PUT_PIXEL(x, (VIDEO_HEIGHT - y - 1), color);
+          VIDEO_PUT_PIXEL(x, (VIDEO_HEIGHT - y - 1), colormap[shade][color]);
       }
     }
 
@@ -313,11 +315,12 @@ void raycaster_render()
       columns[x].v = FIXED_TO_INT(columns[x].tex_y);
       columns[x].tex_y += columns[x].inc_y;
       uint8_t color = checker_texture[RAYCASTER_TEXTURE_SIZE * columns[x].v + columns[x].u];
-      VIDEO_PUT_PIXEL(x, y, color);
+      VIDEO_PUT_PIXEL(x, y, colormap[columns[x].shade][color]);
 
       columns[x].v = FIXED_TO_INT(RAYCASTER_TEXTURE_FIXED_SIZE - columns[x].tex_y);
       color = checker_texture[RAYCASTER_TEXTURE_SIZE * columns[x].v + columns[x].u];
-      VIDEO_PUT_PIXEL(x, (VIDEO_HEIGHT - y - 1), color);
+
+      VIDEO_PUT_PIXEL(x, (VIDEO_HEIGHT - y - 1), colormap[columns[x].shade][color]);
     }
   }
 
@@ -325,14 +328,15 @@ void raycaster_render()
   entity_t *current = visible_entities;
   while (current != NULL)
   {
+    // Si la profundidad de la entidad es mayor que la
+    // distancia de dibujado, entonces pasamos a la
+    // siguiente entidad visible.
     if (current->transform_y >= RAYCASTER_MAX_DRAWING_Z)
     {
       current = current->next_visible;
       continue;
     }
 
-    // TODO: Tenemos que rehacer esto para que se pinten en pantalla
-    //       correctamente.
     fixed_t u = current->texture_start.x;
     fixed_t v = current->texture_start.y;
     for (int16_t y = current->screen_start.y; y < current->screen_end.y; y++)
@@ -349,6 +353,7 @@ void raycaster_render()
 
         int16_t tu = FIXED_TO_INT(u) & (RAYCASTER_TEXTURE_SIZE - 1);
 
+        uint8_t shade = FIXED_TO_INT(current->transform_y << COLORMAP_SHADE_MULTIPLIER) & COLORMAP_SHADE_MASK;
         uint8_t color = checker_texture[texture_offset + tu];
         if (color == TRANSPARENT_COLOR)
         {
@@ -356,7 +361,7 @@ void raycaster_render()
           continue;
         }
 
-        VIDEO_PUT_PIXEL(x, y, color);
+        VIDEO_PUT_PIXEL(x, y, colormap[shade][color]);
         u += current->inc;
       }
       v += current->inc;

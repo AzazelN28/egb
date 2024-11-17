@@ -8,12 +8,23 @@ uint32_t frame_count = 0;
 uint32_t frame_rate = 0;
 
 /**
+ * Leemos las opciones de la línea de comandos.
+ */
+void game_get_options(game_options_t *options, int argc, char** argv) {
+  for (int i = 0; i < argc; i++) {
+    if (strcmp(argv[i], "D") == 0) {
+      options->dump_defaults = true;
+    }
+  }
+}
+
+/**
  * Arrancamos el juego. Aquí es donde
  * registraremos todas las interrupciones
  * necesarias, reservaremos memoria y
  * pondremos el sistema en modo gráfico.
  */
-bool game_init()
+bool game_init(game_options_t *options)
 {
   clrscr();
   _setcursortype(_NOCURSOR);
@@ -47,8 +58,19 @@ bool game_init()
 
   log_line("Iniciando raycaster...");
   raycaster_start();
-  // map_save_default();
   log_answer("[OK]");
+  if (options->dump_defaults) {
+    log_line("Guardando mapa...");
+    map_save_current("_DEFAULT.MAP");
+    log_answer("[OK]");
+  }
+  log_line("Cargando mapa...");
+  if (!map_load_current("_DEFAULT.MAP"))
+  {
+    log_answer("[FAIL]");
+  } else {
+    log_answer("[OK]");
+  }
 
   sleep(1);
 
@@ -60,8 +82,30 @@ bool game_init()
   video_start();
   log_answer("[OK]");
 
-  log_line("Iniciando palette...");
+  log_line("Iniciando paleta...");
   palette_start();
+  log_answer("[OK]");
+  if (options->dump_defaults) {
+    log_line("Guardando paleta...");
+    if (!palette_save("_DEFAULT.PAL"))
+    {
+      log_answer("[FAIL]");
+    } else {
+      log_answer("[OK]");
+    }
+  }
+  log_line("Cargando paleta...");
+  if (!palette_load("_DEFAULT.PAL"))
+  {
+    log_answer("[FAIL]");
+  }
+  else
+  {
+    log_answer("[OK]");
+  }
+
+  log_line("Iniciando colormap...");
+  colormap_load("_DEFAULT.CMP");
   log_answer("[OK]");
 
   // sb_play_file("APLAUSO.PCM");
@@ -83,7 +127,6 @@ void game_input() {
     game_is_running = false;
   }
 }
-
 
 /**
  * Actualizamos la lógica del juego.
@@ -119,12 +162,12 @@ void game_update() {
 
   if (KEY_IS_PRESSED(KEY_LEFT))
   {
-    player.rotation -= 0x100;
+    player.rotation -= PLAYER_ROTATION;
     view.changed_rotation = true;
   }
   else if (KEY_IS_PRESSED(KEY_RIGHT))
   {
-    player.rotation += 0x100;
+    player.rotation += PLAYER_ROTATION;
     view.changed_rotation = true;
   }
 
@@ -146,7 +189,6 @@ void game_update() {
     view.position.x = player.position.x;
     view.position.y = player.position.y;
   }
-
 
   entity_update(&other);
   entity_add_adjacent(&other);
