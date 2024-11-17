@@ -88,6 +88,9 @@ void raycaster_render()
     ray.tile.x = FIXED_FLOOR(view.position.x);
     ray.tile.y = FIXED_FLOOR(view.position.y);
 
+    ray.tilei.x = FIXED_TO_INT(ray.tile.x);
+    ray.tilei.y = FIXED_TO_INT(ray.tile.y);
+
     if (ray.direction.x < 0)
     {
       ray.step.x = RAYCASTER_NEG_ONE;
@@ -115,9 +118,74 @@ void raycaster_render()
 
     ray.hit = false;
     ray.iterations = 0;
-    while (ray.hit == false && ray.iterations < RAYCASTER_MAX_ITERATIONS)
+    while (ray.hit == false
+        && ray.iterations < RAYCASTER_MAX_ITERATIONS)
     {
       ray.iterations++;
+      // Comprobamos si en este tile existen entidades.
+      if (adjacent_entities[ray.tilei.x][ray.tilei.y] != NULL && visited_map[ray.tilei.x][ray.tilei.y] == false)
+      {
+        // Aquí marcamos la casilla como que ha sido
+        // visitada, y ya no tenemos que volver a comprobar
+        // si hay entidades en ella.
+        visited_map[ray.tilei.x][ray.tilei.y] = true;
+
+        // Recorremos todas las entidades que hay en esta casilla.
+        entity_t *current = adjacent_entities[ray.tilei.x][ray.tilei.y];
+        while (current != NULL)
+        {
+          fixed_t delta_x = current->position.x - view.position.x;
+          fixed_t delta_y = current->position.y - view.position.y;
+          if (FIXED_ABS(delta_x) <= FIXED_HALF_UNIT
+           && FIXED_ABS(delta_y) <= FIXED_HALF_UNIT) {
+            current = current->next_adjacent;
+            continue;
+          }
+
+          current->transform_x = FIXED_MUL(view.inv_det, (FIXED_MUL(view.direction.y, delta_x) - FIXED_MUL(view.direction.x, delta_y)));
+          current->transform_y = FIXED_MUL(view.inv_det, (-FIXED_MUL(view.plane.y, delta_x) + FIXED_MUL(view.plane.x, delta_y)));
+          current->x = VIDEO_HALF_WIDTH * (FIXED_UNIT + FIXED_DIV(current->transform_x, current->transform_y));
+          current->y = RAYCASTER_VIDEO_FIXED_HALF_HEIGHT;
+          current->z = FIXED_MUL(delta_x, delta_x) + FIXED_MUL(delta_y, delta_y);
+
+          fixed_t screen_size = FIXED_ABS(FIXED_DIV(RAYCASTER_VIDEO_FIXED_HEIGHT, current->transform_y));
+          current->inc = FIXED_DIV(TEXTURE_FIXED_SIZE, screen_size);
+          current->screen_size = FIXED_TO_INT(screen_size);
+          current->screen_half_size = (current->screen_size >> 1);
+
+          current->texture_start.y = 0;
+          current->screen_start.y = -current->screen_half_size + VIDEO_HALF_HEIGHT;
+          if (current->screen_start.y < RAYCASTER_MIN_Y)
+          {
+            current->texture_start.y = FIXED_MUL(current->inc, FIXED_FROM_INT(RAYCASTER_MIN_Y - current->screen_start.y));
+            current->screen_start.y = RAYCASTER_MIN_Y;
+          }
+
+          current->screen_end.y = current->screen_half_size + VIDEO_HALF_HEIGHT;
+          if (current->screen_end.y > RAYCASTER_MAX_Y)
+          {
+            current->screen_end.y = RAYCASTER_MAX_Y;
+          }
+
+          int16_t x = FIXED_TO_INT(current->x);
+          current->texture_start.x = 0;
+          current->screen_start.x = -current->screen_half_size + x;
+          if (current->screen_start.x < 0)
+          {
+            current->texture_start.x = FIXED_MUL(current->inc, FIXED_FROM_INT(0 - current->screen_start.x));
+            current->screen_start.x = 0;
+          }
+
+          current->screen_end.x = current->screen_half_size + x;
+          if (current->screen_end.x > VIDEO_WIDTH)
+          {
+            current->screen_end.x = VIDEO_WIDTH;
+          }
+          entity_add_visible(current);
+          current = current->next_adjacent;
+        }
+      }
+
       if (ray.side_dist.x < ray.side_dist.y)
       {
         ray.side_dist.x += ray.delta_dist.x;
@@ -133,61 +201,6 @@ void raycaster_render()
 
       ray.tilei.x = FIXED_TO_INT(ray.tile.x);
       ray.tilei.y = FIXED_TO_INT(ray.tile.y);
-
-      // Comprobamos si en este tile existen entidades.
-      if (adjacent_entities[ray.tilei.x][ray.tilei.y] != NULL
-       && visited_map[ray.tilei.x][ray.tilei.y] == false)
-      {
-        // Aquí marcamos la casilla como que ha sido
-        // visitada, y ya no tenemos que volver a comprobar
-        // si hay entidades en ella.
-        visited_map[ray.tilei.x][ray.tilei.y] = true;
-
-        // Recorremos todas las entidades que hay en esta casilla.
-        entity_t *current = adjacent_entities[ray.tilei.x][ray.tilei.y];
-        while (current != NULL) {
-          fixed_t delta_x = current->position.x - view.position.x;
-          fixed_t delta_y = current->position.y - view.position.y;
-
-          current->transform_x = FIXED_MUL(view.inv_det, (FIXED_MUL(view.direction.y, delta_x) - FIXED_MUL(view.direction.x, delta_y)));
-          current->transform_y = FIXED_MUL(view.inv_det, (-FIXED_MUL(view.plane.y, delta_x) + FIXED_MUL(view.plane.x, delta_y)));
-          current->x = VIDEO_HALF_WIDTH * (FIXED_UNIT + FIXED_DIV(current->transform_x, current->transform_y));
-          current->y = RAYCASTER_VIDEO_FIXED_HALF_HEIGHT;
-          current->z = FIXED_MUL(delta_x, delta_x) + FIXED_MUL(delta_y, delta_y);
-
-          fixed_t screen_size = abs(FIXED_DIV(RAYCASTER_VIDEO_FIXED_HEIGHT, current->transform_y));
-          current->inc = FIXED_DIV(TEXTURE_FIXED_SIZE, screen_size);
-          current->screen_size = FIXED_TO_INT(screen_size);
-          current->screen_half_size = (current->screen_size >> 1);
-
-          current->texture_start.y = 0;
-          current->screen_start.y = -current->screen_half_size + VIDEO_HALF_HEIGHT;
-          if (current->screen_start.y < RAYCASTER_MIN_Y) {
-            current->texture_start.y = FIXED_MUL(current->inc, FIXED_FROM_INT(RAYCASTER_MIN_Y - current->screen_start.y));
-            current->screen_start.y = RAYCASTER_MIN_Y;
-          }
-
-          current->screen_end.y = current->screen_half_size + VIDEO_HALF_HEIGHT;
-          if (current->screen_end.y > RAYCASTER_MAX_Y) {
-            current->screen_end.y = RAYCASTER_MAX_Y;
-          }
-
-          int16_t x = FIXED_TO_INT(current->x);
-          current->texture_start.x = 0;
-          current->screen_start.x = -current->screen_half_size + x;
-          if (current->screen_start.x < 0) {
-            current->texture_start.x = FIXED_MUL(current->inc, FIXED_FROM_INT(0 - current->screen_start.x));
-            current->screen_start.x = 0;
-          }
-
-          current->screen_end.x = current->screen_half_size + x;
-          if (current->screen_end.x > VIDEO_WIDTH) {
-            current->screen_end.x = VIDEO_WIDTH;
-          }
-          entity_add_visible(current);
-          current = current->next_adjacent;
-        }
-      }
 
       if (ray.tilei.x < 0 || ray.tilei.y < 0 || ray.tilei.x >= MAP_WIDTH || ray.tilei.y >= MAP_HEIGHT)
       {
@@ -260,7 +273,9 @@ void raycaster_render()
       for (uint8_t y = RAYCASTER_MIN_Y; y < columns[x].draw_start; y++)
       {
         if (row_distances[y] > RAYCASTER_MAX_DRAWING_Z)
+        {
           continue;
+        }
 
         fixed_t floor_step_x = whatever[y].step_x * x;
         fixed_t floor_step_y = whatever[y].step_y * x;
@@ -273,12 +288,21 @@ void raycaster_render()
 
         // TECHO
         uint8_t shade = FIXED_TO_INT(row_distances[y] << COLORMAP_SHADE_MULTIPLIER) & COLORMAP_SHADE_MASK;
-        uint8_t color = checker_texture[TEXTURE_SIZE * v + u];
-        VIDEO_PUT_PIXEL(x, y, colormap[shade][color]);
+        uint8_t color_c = textures[map.textures.ceiling & TEXTURE_MASK][TEXTURE_SIZE * v + u];
+        uint8_t color_f = textures[map.textures.floor & TEXTURE_MASK][TEXTURE_SIZE * v + u];
+        if (!(map.textures.ceiling & TEXTURE_NONE))
+        {
+          VIDEO_PUT_PIXEL(x, y, colormap[shade][color_c]);
+        }
 
         // SUELO
         if ((VIDEO_HEIGHT - y - 1) < RAYCASTER_MAX_Y)
-          VIDEO_PUT_PIXEL(x, (VIDEO_HEIGHT - y - 1), colormap[shade][color]);
+        {
+          if (!(map.textures.floor & TEXTURE_NONE))
+          {
+            VIDEO_PUT_PIXEL(x, (VIDEO_HEIGHT - y - 1), colormap[shade][color_f]);
+          }
+        }
       }
     }
 
@@ -312,7 +336,8 @@ void raycaster_render()
     // Si la profundidad de la entidad es mayor que la
     // distancia de dibujado, entonces pasamos a la
     // siguiente entidad visible.
-    if (current->transform_y >= RAYCASTER_MAX_DRAWING_Z)
+    if (current->transform_y >= RAYCASTER_MAX_DRAWING_Z
+     || current->transform_y <= RAYCASTER_MIN_DRAWING_Z)
     {
       current = current->next_visible;
       continue;

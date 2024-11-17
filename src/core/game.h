@@ -16,6 +16,7 @@
 #include "../game/player.h"
 #include "./timer.h"
 #include "./log.h"
+#include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <conio.h>

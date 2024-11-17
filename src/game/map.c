@@ -35,8 +35,11 @@ map_t map = {
       {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
     }
   },
-  .num_flags = 0,
-  .flags = NULL
+  .textures = {
+    .floor = 0,
+    .ceiling = 0,
+  },
+  .things = {NULL}
 };
 
 /**

@@ -12,7 +12,7 @@ uint32_t frame_rate = 0;
  */
 void game_get_options(game_options_t *options, int argc, char** argv) {
   for (int i = 0; i < argc; i++) {
-    if (strcmp(argv[i], "D") == 0) {
+    if (strcasecmp(argv[i], "dump") == 0) {
       options->dump_defaults = true;
     }
   }

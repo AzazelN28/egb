@@ -4,6 +4,9 @@ uint32_t textures_loaded = 0;
 uint8_t textures[MAX_TEXTURES][TEXTURE_BUFFER_SIZE];
 uint8_t checker_texture[TEXTURE_BUFFER_SIZE] = {0};
 
+/**
+ * Genera la textura de debug.
+ */
 void texture_start()
 {
 #ifdef XOR_TEXTURE
@@ -30,6 +33,10 @@ void texture_start()
 #endif
 }
 
+/**
+ * Guarda la textura de checkerboard que se usa
+ * para debuggear.
+ */
 bool texture_save(const char* filename)
 {
   FILE* fh = fopen(filename, "wb");
@@ -41,6 +48,10 @@ bool texture_save(const char* filename)
   return true;
 }
 
+/**
+ * Carga la textura de checkerboard que se usa
+ * para debuggear.
+ */
 bool texture_load(const char *filename)
 {
   FILE *fh = fopen(filename, "rb");
@@ -53,6 +64,9 @@ bool texture_load(const char *filename)
   return true;
 }
 
+/**
+ * Carga las texturas del juego.
+ */
 bool textures_load(const char *filename)
 {
   FILE *fh = fopen(filename, "rb");
