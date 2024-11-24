@@ -37,12 +37,24 @@ entity_t entities[MAX_ENTITIES] = {
   0,
   NULL,
   NULL},
+  {ENEMY,
+  FIXED_HALF_UNIT,
+  {FIXED_FROM_INT(9), FIXED_FROM_INT(9)},
+  {FIXED_FROM_INT(9), FIXED_FROM_INT(9)},
+  {FIXED_NEG_ONE, 0},
+  0,
+  0,
+  {9, 9},
+  0,
+  NULL,
+  NULL},
   {NONE}
 };
 entity_t *adjacent_entities[MAP_WIDTH][MAP_HEIGHT] = {NULL};
 entity_t *visible_entities = NULL;
+entity_t *last_visible_entity = NULL;
 uint8_t num_visible_entities = 0;
-uint8_t num_entities = 2;
+uint8_t num_entities = 3;
 
 /**
  * Intenta mover una entidad.
@@ -135,6 +147,7 @@ void entity_clear_visible()
     current = next;
   }
   visible_entities = NULL;
+  last_visible_entity = NULL;
   num_visible_entities = 0;
 }
 
@@ -148,9 +161,12 @@ void entity_add_visible(entity_t *entity)
   // y salimos.
   if (visible_entities == NULL) {
     visible_entities = entity;
+    last_visible_entity = entity;
     entity->next_visible = NULL;
     return;
   }
+  last_visible_entity->next_visible = entity;
+  entity->next_visible = NULL;
 }
 
 /**
