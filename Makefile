@@ -17,7 +17,7 @@ all:
 		-fomit-frame-pointer \
 		-funroll-loops \
 		-ffast-math \
-		-O2 \
+		-O3 \
 		src/main.c \
 		src/math/fixed.c \
 		src/math/rand.c \
@@ -55,7 +55,7 @@ asm:
 		-fomit-frame-pointer \
 		-funroll-loops \
 		-ffast-math \
-		-O2 \
+		-O3 \
 		src/main.c \
 		src/math/fixed.c \
 		src/math/rand.c \

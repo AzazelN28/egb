@@ -1,6 +1,7 @@
 #include "entity.h"
 
 entity_t player = {
+    PLAYER,
     FIXED_HALF_UNIT,
     {FIXED_FROM_INT(22), FIXED_FROM_INT(10)},
     {FIXED_FROM_INT(22), FIXED_FROM_INT(10)},
@@ -13,20 +14,9 @@ entity_t player = {
     NULL
     };
 
-entity_t other = {
-    FIXED_HALF_UNIT,
-    {FIXED_FROM_INT(22), FIXED_FROM_INT(10)},
-    {FIXED_FROM_INT(22), FIXED_FROM_INT(10)},
-    {FIXED_NEG_ONE, 0},
-    0,
-    0,
-    {22, 10},
-    0,
-    NULL,
-    NULL};
-
 entity_t entities[MAX_ENTITIES] = {
-  {FIXED_HALF_UNIT,
+  {ENEMY,
+  FIXED_HALF_UNIT,
   {FIXED_FROM_INT(22), FIXED_FROM_INT(10)},
   {FIXED_FROM_INT(22), FIXED_FROM_INT(10)},
   {FIXED_NEG_ONE, 0},
@@ -36,11 +26,23 @@ entity_t entities[MAX_ENTITIES] = {
   0,
   NULL,
   NULL},
-  NULL
+  {ENEMY,
+  FIXED_HALF_UNIT,
+  {FIXED_FROM_INT(10), FIXED_FROM_INT(10)},
+  {FIXED_FROM_INT(10), FIXED_FROM_INT(10)},
+  {FIXED_NEG_ONE, 0},
+  0,
+  0,
+  {10, 10},
+  0,
+  NULL,
+  NULL},
+  {NONE}
 };
 entity_t *adjacent_entities[MAP_WIDTH][MAP_HEIGHT] = {NULL};
 entity_t *visible_entities = NULL;
 uint8_t num_visible_entities = 0;
+uint8_t num_entities = 2;
 
 /**
  * Intenta mover una entidad.

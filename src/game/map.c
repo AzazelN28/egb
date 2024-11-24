@@ -93,20 +93,32 @@ bool map_load(const char* filename, map_t *map)
  */
 void map_render()
 {
-  const uint16_t position_y = 160;
+  const uint16_t position_y = 168;
+  const uint16_t position_x = 8;
   for (uint16_t y = 0; y < MAP_HEIGHT; y++)
   {
     for (uint16_t x = 0; x < MAP_WIDTH; x++)
     {
       if (map.tiles.data[x][y] > 0)
       {
-        VIDEO_PUT_PIXEL(x, (y + position_y), 0x5);
+        VIDEO_PUT_PIXEL((x + position_x), (y + position_y), 0x5);
       }
     }
   }
 
+  for (uint16_t i = 0; i < num_entities; i++)
+  {
+    if (entities[i].kind != NONE) {
+      VIDEO_PUT_PIXEL(
+          FIXED_TO_INT(entities[i].position.x) + position_x,
+          (FIXED_TO_INT(entities[i].position.y) +
+           position_y),
+          0x0F);
+    }
+  }
+
   VIDEO_PUT_PIXEL(
-      FIXED_TO_INT(player.position.x),
+      FIXED_TO_INT(player.position.x) + position_x,
       (FIXED_TO_INT(player.position.y) + position_y),
       0x0F);
 }

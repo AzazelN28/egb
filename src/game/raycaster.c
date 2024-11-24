@@ -288,8 +288,8 @@ void raycaster_render()
 
         // TECHO
         uint8_t shade = FIXED_TO_INT(row_distances[y] << COLORMAP_SHADE_MULTIPLIER) & COLORMAP_SHADE_MASK;
-        uint8_t color_c = textures[map.textures.ceiling & TEXTURE_MASK][TEXTURE_SIZE * v + u];
-        uint8_t color_f = textures[map.textures.floor & TEXTURE_MASK][TEXTURE_SIZE * v + u];
+        uint16_t uv = TEXTURE_SIZE * v + u;
+        uint8_t color_c = textures[map.textures.ceiling & TEXTURE_MASK][uv];
         if (!(map.textures.ceiling & TEXTURE_NONE))
         {
           VIDEO_PUT_PIXEL(x, y, colormap[shade][color_c]);
@@ -298,6 +298,7 @@ void raycaster_render()
         // SUELO
         if ((VIDEO_HEIGHT - y - 1) < RAYCASTER_MAX_Y)
         {
+          uint8_t color_f = textures[map.textures.floor & TEXTURE_MASK][uv];
           if (!(map.textures.floor & TEXTURE_NONE))
           {
             VIDEO_PUT_PIXEL(x, (VIDEO_HEIGHT - y - 1), colormap[shade][color_f]);

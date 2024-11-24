@@ -17,8 +17,16 @@
 
 #define ENTITY_RADIUS 0x3fff
 
+typedef enum entity_kind_
+{
+  NONE,
+  PLAYER,
+  ENEMY
+} entity_kind_t;
+
 typedef struct entity_
 {
+  entity_kind_t kind;
   fixed_t radius;
   vec2fix_t position;
   vec2fix_t next_position;
@@ -48,7 +56,7 @@ typedef struct entity_
 } entity_t;
 
 extern entity_t player;
-extern entity_t other;
+extern uint8_t num_entities;
 extern entity_t entities[MAX_ENTITIES];
 
 extern entity_t *adjacent_entities[MAP_WIDTH][MAP_HEIGHT];

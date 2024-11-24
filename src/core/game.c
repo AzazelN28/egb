@@ -113,6 +113,10 @@ bool game_init(game_options_t *options)
   colormap_load("_DEFAULT.CMP");
   log_answer("[OK]");
 
+  log_line("Cargando texturas...");
+  textures_load("TEXTURES.BIN");
+  log_answer("[OK]");
+
   // sb_play_file("APLAUSO.PCM");
   fade_in(100);
   return true;
@@ -195,8 +199,10 @@ void game_update() {
     view.position.y = player.position.y;
   }
 
-  entity_update(&other);
-  entity_add_adjacent(&other);
+  for (uint8_t i = 0; i < num_entities; i++) {
+    entity_update(&entities[i]);
+    entity_add_adjacent(&entities[i]);
+  }
 }
 
 void debug_render() {
