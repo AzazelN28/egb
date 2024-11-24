@@ -62,3 +62,7 @@ bool mouse_is_pressed(uint8_t button) {
 bool mouse_is_released(uint8_t button) {
   return (mouse.buttons & button) ? false : true;
 }
+
+void mouse_render() {
+  VIDEO_PUT_PIXEL(mouse.current.x, mouse.current.y, 0x0F);
+}

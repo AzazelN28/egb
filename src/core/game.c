@@ -262,6 +262,7 @@ void game_render() {
   entity_clear_visible();
   raycaster_render();
   map_render();
+  mouse_render();
   debug_render();
 }
 

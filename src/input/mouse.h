@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "../video/video.h"
 #include "../math/vec2.h"
 
 #define MOUSE_INIT 0x00
@@ -36,3 +37,4 @@ void mouse_get_status();
 void mouse_stop();
 bool mouse_is_pressed(uint8_t button);
 bool mouse_is_released(uint8_t button);
+void mouse_render();
