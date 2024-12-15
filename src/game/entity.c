@@ -39,20 +39,20 @@ entity_t entities[MAX_ENTITIES] = {
   NULL},
   {ENEMY,
   FIXED_HALF_UNIT,
-  {FIXED_FROM_INT(9), FIXED_FROM_INT(9)},
-  {FIXED_FROM_INT(9), FIXED_FROM_INT(9)},
+  {FIXED_FROM_INT(10), FIXED_FROM_INT(8)},
+  {FIXED_FROM_INT(10), FIXED_FROM_INT(8)},
   {FIXED_NEG_ONE, 0},
   0,
   0,
-  {9, 9},
+  {10, 8},
   0,
   NULL,
   NULL},
   {NONE}
 };
 entity_t *adjacent_entities[MAP_WIDTH][MAP_HEIGHT] = {NULL};
-entity_t *visible_entities = NULL;
 entity_t *last_visible_entity = NULL;
+entity_t *first_visible_entity = NULL;
 uint8_t num_visible_entities = 0;
 uint8_t num_entities = 3;
 
@@ -93,8 +93,9 @@ void entity_move(entity_t *entity)
   entity->collision = COLLISION_NONE;
 
   vec2fix_t current_position = {
-      .x = entity->position.x,
-      .y = entity->position.y};
+    .x = entity->position.x,
+    .y = entity->position.y
+  };
 
   entity->position.x = entity->next_position.x;
   entity->position.y = entity->next_position.y;
@@ -139,15 +140,19 @@ void entity_update(entity_t *entity) {
  */
 void entity_clear_visible()
 {
-  entity_t *current = visible_entities;
-  while (current != NULL)
-  {
-    entity_t *next = current->next_visible;
-    current->next_visible = NULL;
-    current = next;
+  if (last_visible_entity) {
+    last_visible_entity->next_visible = NULL;
+    last_visible_entity->prev_visible = NULL;
   }
-  visible_entities = NULL;
+
+  if (first_visible_entity) {
+    first_visible_entity->next_visible = NULL;
+    first_visible_entity->prev_visible = NULL;
+  }
+
   last_visible_entity = NULL;
+  first_visible_entity = NULL;
+
   num_visible_entities = 0;
 }
 
@@ -159,13 +164,36 @@ void entity_add_visible(entity_t *entity)
 {
   // Si la lista está vacía, añadimos la entidad
   // y salimos.
-  if (visible_entities == NULL) {
-    visible_entities = entity;
+  if (first_visible_entity == NULL)
+  {
+    first_visible_entity = entity;
     last_visible_entity = entity;
+
     entity->next_visible = NULL;
+    entity->prev_visible = NULL;
     return;
   }
+
+  entity_t *previous = NULL;
+  for (entity_t *current = first_visible_entity; current != NULL; current = current->next_visible) {
+    if (current->z < entity->z) {
+      continue;
+    }
+
+    entity->next_visible = current;
+    current->prev_visible = entity;
+    entity->prev_visible = previous;
+    if (previous == NULL) {
+      first_visible_entity = entity;
+    } else {
+      previous->next_visible = entity;
+    }
+    return;
+  }
+
   last_visible_entity->next_visible = entity;
+  entity->prev_visible = last_visible_entity;
+  last_visible_entity = entity;
   entity->next_visible = NULL;
 }
 

@@ -331,7 +331,7 @@ void raycaster_render()
   }
 
   // Renderizamos las entidades visibles.
-  entity_t *current = visible_entities;
+  entity_t *current = last_visible_entity;
   while (current != NULL)
   {
     // Si la profundidad de la entidad es mayor que la
@@ -340,7 +340,7 @@ void raycaster_render()
     if (current->transform_y >= RAYCASTER_MAX_DRAWING_Z
      || current->transform_y <= RAYCASTER_MIN_DRAWING_Z)
     {
-      current = current->next_visible;
+      current = current->prev_visible;
       continue;
     }
 
@@ -376,7 +376,7 @@ void raycaster_render()
     }
 
     num_visible_entities++;
-    current = current->next_visible;
+    current = current->prev_visible;
   }
 
   view.changed_position = false;

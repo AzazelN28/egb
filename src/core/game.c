@@ -207,7 +207,7 @@ void game_update() {
 
 void debug_render() {
   // Imprimimos el número de tics y las coordenadas del ratón.
-  font_draw(0, 0, 0xF, "FPS: %d TIME: %d DURATION: %d START: %d VISIBLE: %d", frame_rate, frame_tics, fade_duration_in_tics, fade_timer.start, num_visible_entities);
+  font_draw(0, 0, 0xF, FONT_DEFAULT, "FPS: %d TIME: %d DURATION: %d START: %d VISIBLE: %d", frame_rate, frame_tics, fade_duration_in_tics, fade_timer.start, num_visible_entities);
 #if 0
   if (mouse.current.y > columns[mouse.current.x].draw_start
    && mouse.current.y < columns[mouse.current.x].draw_end)

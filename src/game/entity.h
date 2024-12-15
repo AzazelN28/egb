@@ -52,15 +52,20 @@ typedef struct entity_
 
   // siguiente visible.
   struct entity_ *next_visible;
+  struct entity_ *prev_visible;
   struct entity_ *next_adjacent;
 } entity_t;
 
+// El jugador es una entidad separada.
 extern entity_t player;
+
+// Entidades del juego.
 extern uint8_t num_entities;
 extern entity_t entities[MAX_ENTITIES];
 
 extern entity_t *adjacent_entities[MAP_WIDTH][MAP_HEIGHT];
-extern entity_t *visible_entities;
+extern entity_t *first_visible_entity;
+extern entity_t *last_visible_entity;
 extern uint8_t num_visible_entities;
 
 bool entity_try_move(entity_t *entity);

@@ -2,6 +2,7 @@
 
 uint8_t *video_ptr = NULL;
 uint8_t video_buffer[VIDEO_BUFFER_SIZE];
+uint32_t *fast_video_buffer = (uint32_t*)&video_buffer;
 #ifdef VIDEO_ENABLE_UNCHAINED
 uint32_t video_pages[VIDEO_PAGES] = {
   0x0000,

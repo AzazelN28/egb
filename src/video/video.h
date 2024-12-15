@@ -49,9 +49,11 @@
 #define VGA_MODE_CONTROL 0x17
 
 #define VIDEO_PUT_PIXEL(x, y, c) video_buffer[y * VIDEO_WIDTH + x] = c
+#define VIDEO_FAST_PUT(x, y, c) fast_video_buffer[y * VIDEO_WIDTH + x]  = c
 
 extern uint8_t *video_ptr;
 extern uint8_t video_buffer[VIDEO_BUFFER_SIZE];
+extern uint32_t *fast_video_buffer;
 
 bool video_start();
 void video_stop();

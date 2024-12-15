@@ -61,14 +61,14 @@ bool map_load_current(const char* filename)
 /**
  * Guarda un mapa en un archivo.
  */
-bool map_save(const char* filename, map_t *map)
+bool map_save(const char* filename, map_t *map_target)
 {
   FILE *fh = fopen(filename, "wb");
   if (fh == NULL)
   {
     return false;
   }
-  fwrite(map, sizeof(map_t), 1, fh);
+  fwrite(map_target, sizeof(map_t), 1, fh);
   fclose(fh);
   return true;
 }
@@ -76,14 +76,14 @@ bool map_save(const char* filename, map_t *map)
 /**
  * Carga un mapa desde un archivo.
  */
-bool map_load(const char* filename, map_t *map)
+bool map_load(const char* filename, map_t *map_target)
 {
   FILE *fh = fopen(filename, "rb");
   if (fh == NULL)
   {
     return false;
   }
-  fread(map, sizeof(map_t), 1, fh);
+  fread(map_target, sizeof(map_t), 1, fh);
   fclose(fh);
   return true;
 }
